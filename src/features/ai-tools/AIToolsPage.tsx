@@ -24,32 +24,24 @@ export function AIToolsPage() {
       id: 'exam-matrix' as SubToolTab,
       label: 'Ma trận & Đặc tả Đề',
       icon: Table,
-      color: 'text-blue-500',
-      activeColor: 'bg-blue-600 text-white',
       badge: 'GDPT 2018',
     },
     {
       id: 'quiz-builder' as SubToolTab,
       label: 'Trắc nghiệm Tin học',
       icon: HelpCircle,
-      color: 'text-purple-500',
-      activeColor: 'bg-purple-600 text-white',
       badge: '3 Dạng thức',
     },
     {
       id: 'lesson-plan' as SubToolTab,
       label: 'Kế hoạch Bài dạy 5512',
       icon: BookOpenCheck,
-      color: 'text-emerald-500',
-      activeColor: 'bg-emerald-600 text-white',
       badge: 'CV 5512',
     },
     {
       id: 'code-exercise' as SubToolTab,
       label: 'Bài tập Code & Test Case',
       icon: Code2,
-      color: 'text-amber-500',
-      activeColor: 'bg-amber-600 text-white',
       badge: 'Python/SQL',
     },
   ];
@@ -59,8 +51,8 @@ export function AIToolsPage() {
       {/* Module Title Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl shadow-md">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
               <Wand2 size={22} />
             </div>
             Trợ lý AI Giáo viên Tin học
@@ -69,7 +61,7 @@ export function AIToolsPage() {
             Bộ công cụ sinh cấu trúc Prompt chuyên sâu hỗ trợ soạn giáo án 5512, ma trận và đề thi Tin học THPT.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-xs font-semibold text-blue-700 dark:text-blue-300 w-fit">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold text-indigo-700 dark:text-indigo-300 w-fit">
           <Sparkles size={14} /> Tối ưu cho ChatGPT / Claude / Gemini
         </div>
       </div>
@@ -85,12 +77,12 @@ export function AIToolsPage() {
               onClick={() => setActiveSubTab(tool.id)}
               className={`p-3.5 sm:p-4 rounded-2xl flex flex-col items-start justify-between transition-all min-h-[90px] text-left border ${
                 isActive
-                  ? `${tool.activeColor} border-transparent shadow-lg scale-[1.02]`
-                  : `${glassClass} hover:border-blue-300 dark:hover:border-blue-700 text-slate-700 dark:text-slate-300`
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                  : `${glassClass} hover:border-indigo-300 dark:hover:border-indigo-700 text-slate-700 dark:text-slate-300`
               }`}
             >
               <div className="flex items-center justify-between w-full mb-2">
-                <Icon size={22} className={isActive ? 'text-white' : tool.color} />
+                <Icon size={20} className={isActive ? 'text-white' : 'text-indigo-600 dark:text-indigo-400'} />
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                     isActive

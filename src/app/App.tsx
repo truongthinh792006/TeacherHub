@@ -11,12 +11,11 @@ import {
   Search,
   MoreHorizontal,
   LogIn,
-  Save,
   DownloadCloud,
   CalendarDays,
   Briefcase,
   RefreshCw,
-  Flame,
+  Cloud,
 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { useStorageController } from '../hooks/useStorageController';
@@ -200,10 +199,10 @@ function HeaderCloudSyncIndicator({
     return (
       <button
         onClick={openAuthModal}
-        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 transition-colors"
-        title="Đăng nhập để đồng bộ Realtime qua Firebase Cloud"
+        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 transition-colors"
+        title="Đăng nhập để đồng bộ Realtime qua Cloud"
       >
-        <Flame size={14} className="text-amber-500" />
+        <Cloud size={13} className="text-slate-400" />
         <span className="hidden sm:inline">Đăng nhập Cloud</span>
       </button>
     );
@@ -223,23 +222,24 @@ function HeaderCloudSyncIndicator({
       disabled={firebaseAuth.isSyncing}
       className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
         firebaseAuth.isSyncing
-          ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200'
-          : 'bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15'
       }`}
       title={
         firebaseAuth.lastSyncedAt
-          ? `Đã đồng bộ Cloud lúc ${new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')} (Nhấn để đồng bộ ngay)`
+          ? `Đã đồng bộ Cloud lúc ${new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')} (Nhấn để đồng bộ lại)`
           : 'Đồng bộ đám mây Realtime'
       }
     >
+      <span className={`w-1.5 h-1.5 rounded-full ${firebaseAuth.isSyncing ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
       <RefreshCw
-        size={13}
-        className={firebaseAuth.isSyncing ? 'animate-spin text-amber-600' : 'text-emerald-600'}
+        size={12}
+        className={firebaseAuth.isSyncing ? 'animate-spin text-amber-500' : 'text-emerald-500'}
       />
       <span className="hidden sm:inline">
         {firebaseAuth.isSyncing
           ? 'Đang đồng bộ...'
-          : `Cloud (${formatLastSync(firebaseAuth.lastSyncedAt)})`}
+          : `Đã đồng bộ ${formatLastSync(firebaseAuth.lastSyncedAt)}`}
       </span>
     </button>
   );
@@ -359,13 +359,13 @@ export default function App() {
     showConfirm,
     closeModal,
     glassClass:
-      'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 shadow-sm rounded-2xl',
+      'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl',
     inputClass:
-      'w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 min-h-[44px] text-base md:text-sm text-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all',
+      'w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 min-h-[42px] text-sm text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400',
     btnPrimary:
-      'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-6 py-3 min-h-[44px] rounded-xl font-medium transition-colors flex items-center justify-center gap-2',
+      'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2.5 min-h-[42px] rounded-xl font-medium transition-colors flex items-center justify-center gap-2 shadow-sm',
     btnSecondary:
-      'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-3 min-h-[44px] rounded-xl font-medium transition-colors flex items-center justify-center gap-2',
+      'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-5 py-2.5 min-h-[42px] rounded-xl font-medium transition-colors flex items-center justify-center gap-2 border border-slate-200/60 dark:border-slate-700/60',
   };
 
   const page =
@@ -399,114 +399,106 @@ export default function App() {
   return (
     <AppProvider value={contextValue}>
       <div
-        className={`min-h-[100dvh] transition-colors duration-300 ${
-          darkMode ? 'bg-slate-950 text-slate-50' : 'bg-slate-50 text-slate-900'
+        className={`min-h-[100dvh] transition-colors duration-200 ${
+          darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
         }`}
       >
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div
-            className={`absolute -top-40 -left-40 w-96 h-96 rounded-full blur-[100px] opacity-20 ${
-              darkMode ? 'bg-blue-600' : 'bg-blue-400'
-            }`}
-          />
-          <div
-            className={`absolute top-1/2 -right-20 w-80 h-80 rounded-full blur-[100px] opacity-20 ${
-              darkMode ? 'bg-purple-600' : 'bg-purple-400'
-            }`}
-          />
-        </div>
-
         <div className="flex h-[100dvh] relative z-10 overflow-hidden pb-[72px] lg:pb-0">
           {/* Sidebar desktop */}
-          <aside className="hidden lg:flex flex-col w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-r border-slate-200/50 dark:border-slate-800">
-            <div className="p-6 flex items-center space-x-3 border-b border-slate-200/50 dark:border-slate-800">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+          <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+            {/* Header Brand */}
+            <div className="p-5 flex items-center space-x-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
                 T
               </div>
               <div>
-                <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
                   Teacher Hub
                 </h2>
-                <p className="text-[10px] font-bold text-slate-500 tracking-widest uppercase">
+                <p className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 tracking-wider uppercase">
                   Pro Edition
                 </p>
               </div>
             </div>
 
-            <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-4">
+            {/* Navigation items */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">
                 Menu Chính
               </div>
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium min-h-[44px] ${
-                    activeTab === item.id
-                      ? 'bg-blue-500 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <item.icon
-                    size={20}
-                    className={activeTab === item.id ? 'animate-pulse' : ''}
-                  />
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {navItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors font-medium text-sm min-h-[40px] ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
-              <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-4 pt-6">
-                Thêm
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3 pt-5">
+                Chuyên môn & Tiện ích
               </div>
-              {moreNavItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium min-h-[44px] ${
-                    activeTab === item.id
-                      ? 'bg-purple-500 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <item.icon size={20} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {moreNavItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-colors font-medium text-sm min-h-[40px] ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'
+                    }`}
+                  >
+                    <item.icon size={18} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </nav>
 
             {/* Install PWA Button (Desktop Sidebar) */}
             {deferredPrompt && (
-              <div className="px-4 pb-2">
+              <div className="px-3 pb-2">
                 <button
                   onClick={handleInstallClick}
-                  className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md transition-all active:scale-95"
+                  className="w-full flex items-center justify-center gap-2 p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors"
                 >
-                  <DownloadCloud size={16} /> Cài đặt TeacherHub App
+                  <DownloadCloud size={15} /> Cài đặt TeacherHub App
                 </button>
               </div>
             )}
 
             {/* User & Cloud Sync Footer */}
-            <div className="p-4 border-t border-slate-200/50 dark:border-slate-800">
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2">
-                <div className="flex items-center gap-3">
+            <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2 border border-slate-200/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-2.5">
                   {firebaseAuth.isAuthenticated && firebaseAuth.user?.photoURL ? (
                     <img
                       src={firebaseAuth.user.photoURL}
                       alt={firebaseAuth.user.displayName || ''}
-                      className="w-9 h-9 rounded-full border border-amber-300"
+                      className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-600"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user ? (
                         (firebaseAuth.user.displayName || 'G').charAt(0).toUpperCase()
                       ) : (
-                        <LogIn size={16} />
+                        <LogIn size={14} />
                       )}
                     </div>
                   )}
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user
                         ? firebaseAuth.user.displayName
                         : 'Local User'}
@@ -531,9 +523,9 @@ export default function App() {
 
           {/* Main content */}
           <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-            <header className="px-4 py-3 sm:p-4 lg:p-6 flex items-center justify-between sticky top-0 z-30 bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800 lg:border-none lg:bg-transparent">
+            <header className="px-4 py-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center lg:hidden">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm">
                   T
                 </div>
               </div>
@@ -548,19 +540,19 @@ export default function App() {
                 {deferredPrompt && (
                   <button
                     onClick={handleInstallClick}
-                    className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/40 hover:bg-blue-100 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-700 px-3 py-2 rounded-full text-xs font-semibold min-h-[40px] transition-colors"
+                    className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
                   >
-                    <DownloadCloud size={16} />
+                    <DownloadCloud size={14} />
                     <span className="hidden sm:inline">Cài App</span>
                   </button>
                 )}
                 <button
                   onClick={() => setGlobalSearchOpen(true)}
-                  className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 text-slate-500 px-4 py-2.5 rounded-full w-10 sm:w-64 min-h-[44px] overflow-hidden"
+                  className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-500 px-4 py-2 rounded-full w-10 sm:w-64 min-h-[38px] overflow-hidden transition-colors"
                 >
-                  <Search size={20} className="flex-shrink-0" />
-                  <span className="hidden sm:inline font-medium text-sm">
-                    Tìm mọi thứ...
+                  <Search size={16} className="flex-shrink-0" />
+                  <span className="hidden sm:inline font-medium text-xs">
+                    Tìm kiếm nhanh...
                   </span>
                 </button>
               </div>
@@ -576,8 +568,8 @@ export default function App() {
         </div>
 
         {/* Mobile bottom nav */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 z-40 pb-safe">
-          <div className="flex justify-around items-center h-[72px] px-2">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-40 pb-safe">
+          <div className="flex justify-around items-center h-[64px] px-2">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -587,41 +579,36 @@ export default function App() {
                 }}
                 className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${
                   activeTab === item.id && !mobileMoreOpen
-                    ? 'text-blue-600'
+                    ? 'text-indigo-600 dark:text-indigo-400 font-semibold'
                     : 'text-slate-500'
                 }`}
               >
-                <item.icon
-                  size={24}
-                  className={
-                    activeTab === item.id && !mobileMoreOpen ? 'animate-bounce-slight' : ''
-                  }
-                />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <item.icon size={20} />
+                <span className="text-[10px]">{item.label}</span>
               </button>
             ))}
             <button
               onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
               className={`flex flex-col items-center justify-center w-16 h-full gap-1 transition-colors ${
-                mobileMoreOpen ? 'text-purple-600' : 'text-slate-500'
+                mobileMoreOpen ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-slate-500'
               }`}
             >
-              <MoreHorizontal size={24} />
-              <span className="text-[10px] font-medium">Thêm</span>
+              <MoreHorizontal size={20} />
+              <span className="text-[10px]">Thêm</span>
             </button>
           </div>
         </nav>
 
         {mobileMoreOpen && (
           <div
-            className="lg:hidden fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-30 bg-slate-950/50 backdrop-blur-sm"
             onClick={() => setMobileMoreOpen(false)}
           >
             <div
-              className="absolute bottom-[72px] left-0 right-0 bg-white dark:bg-slate-900 rounded-t-3xl p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom-full duration-200"
+              className="absolute bottom-[64px] left-0 right-0 bg-white dark:bg-slate-900 rounded-t-3xl p-4 shadow-xl border-t border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom-full duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6" />
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5" />
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
                 {moreNavItems.map((item) => (
                   <button
@@ -630,16 +617,16 @@ export default function App() {
                       setActiveTab(item.id);
                       setMobileMoreOpen(false);
                     }}
-                    className="flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-2 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   >
                     <div
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-colors ${
                         activeTab === item.id
-                          ? 'bg-purple-100 text-purple-600 border-2 border-purple-500'
-                          : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
-                      <item.icon size={24} />
+                      <item.icon size={22} />
                     </div>
                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
                       {item.label}
@@ -656,14 +643,14 @@ export default function App() {
                       setMobileMoreOpen(false);
                       handleInstallClick();
                     }}
-                    className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold shadow-md"
+                    className="w-full flex items-center justify-center gap-2 p-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold shadow-sm"
                   >
-                    <DownloadCloud size={18} /> Cài đặt Teacher Hub App
+                    <DownloadCloud size={16} /> Cài đặt Teacher Hub App
                   </button>
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-2">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-2">
                 <HeaderCloudSyncIndicator
                   firebaseAuth={firebaseAuth}
                   openAuthModal={openAuthModal}

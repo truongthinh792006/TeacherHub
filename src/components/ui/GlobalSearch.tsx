@@ -231,40 +231,40 @@ export function GlobalSearch() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-safe-top sm:p-4">
-      <div className="w-full h-full sm:h-auto sm:max-h-[80vh] max-w-2xl bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-safe-top sm:p-4 animate-in fade-in duration-200">
+      <div className="w-full h-full sm:h-auto sm:max-h-[80vh] max-w-2xl bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-          <Search className="text-slate-400" size={24} />
+          <Search className="text-slate-400" size={20} />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Tìm kiếm mọi thứ..."
+            placeholder="Tìm kiếm công việc, bài học, prompt, học sinh..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-transparent text-lg text-slate-800 dark:text-white outline-none placeholder:text-slate-400 min-h-[44px]"
+            className="flex-1 bg-transparent text-base text-slate-900 dark:text-slate-100 outline-none placeholder:text-slate-400 min-h-[40px]"
           />
           <button
             onClick={() => setSearchTerm('')}
-            className={`p-2 ${
+            className={`p-1.5 ${
               searchTerm ? 'opacity-100' : 'opacity-0'
             } transition-opacity text-slate-400`}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
           <button
             onClick={() => setGlobalSearchOpen(false)}
-            className="p-2 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap min-h-[44px]"
+            className="p-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-semibold whitespace-nowrap"
           >
             Đóng
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {searchTerm.length > 0 && searchTerm.length < 2 && (
-            <p className="p-4 text-center text-slate-500">Nhập ít nhất 2 ký tự...</p>
+            <p className="p-4 text-center text-xs text-slate-500">Nhập ít nhất 2 ký tự để tìm kiếm...</p>
           )}
           {searchTerm.length >= 2 && results.length === 0 && (
-            <p className="p-8 text-center text-slate-500 flex flex-col items-center gap-2">
-              <Search size={32} className="opacity-30" /> Không tìm thấy kết quả nào.
+            <p className="p-8 text-center text-xs text-slate-500 flex flex-col items-center gap-2">
+              <Search size={28} className="opacity-30" /> Không tìm thấy kết quả nào phù hợp.
             </p>
           )}
           {results.map((res, idx) => {
@@ -273,20 +273,20 @@ export function GlobalSearch() {
               <button
                 key={idx}
                 onClick={() => handleSelect(res)}
-                className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 flex items-start gap-4 rounded-xl transition-colors min-h-[60px]"
+                className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-start gap-3.5 rounded-xl transition-colors min-h-[56px]"
               >
-                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-blue-500 flex-shrink-0">
-                  <Icon size={20} />
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 rounded-lg text-indigo-600 dark:text-indigo-400 flex-shrink-0">
+                  <Icon size={18} />
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                  <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                     {res.title}
                   </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                     {res.desc}
                   </p>
                 </div>
-                <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded flex-shrink-0">
+                <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded flex-shrink-0">
                   {res.type}
                 </span>
               </button>

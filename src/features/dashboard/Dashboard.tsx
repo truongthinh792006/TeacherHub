@@ -7,6 +7,7 @@ import {
   Calendar as CalendarIcon,
   Clock,
   AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import { localDateString } from '../../lib/date';
@@ -36,161 +37,163 @@ export function Dashboard() {
   return (
     <div className="space-y-6 animate-in fade-in">
       <header className="mb-6 lg:mb-8">
-        <h1 className="text-2xl lg:text-3xl font-bold text-slate-800 dark:text-white">
+        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
           Xin chào, Thầy/Cô 👋
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-2 text-sm lg:text-base">
-          <CalendarIcon size={16} /> {todayDateStr}
+        <p className="text-slate-500 dark:text-slate-400 mt-1.5 flex items-center gap-2 text-sm">
+          <CalendarIcon size={15} /> {todayDateStr}
         </p>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+        {/* Today's Tasks */}
         <div
-          className={`${glassClass} p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-blue-500`}
+          className={`${glassClass} p-4 lg:p-5 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-indigo-600`}
         >
-          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-500 rounded-xl w-fit">
-            <CheckSquare size={24} />
+          <div className="p-2.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl w-fit">
+            <CheckSquare size={22} />
           </div>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Hôm nay</p>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            <h3 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white">
               {todayTasks}{' '}
-              <span className="text-sm font-normal text-slate-400">/ {pendingTasks}</span>
+              <span className="text-xs font-normal text-slate-400">/ {pendingTasks}</span>
             </h3>
           </div>
         </div>
 
+        {/* Overdue Tasks */}
         <div
-          className={`${glassClass} p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-red-500`}
+          className={`${glassClass} p-4 lg:p-5 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-rose-500`}
         >
-          <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-xl w-fit">
-            <AlertCircle size={24} />
+          <div className="p-2.5 bg-rose-500/10 text-rose-500 rounded-xl w-fit">
+            <AlertCircle size={22} />
           </div>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quá hạn</p>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            <h3 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white">
               {overdueTasks}
             </h3>
           </div>
         </div>
 
+        {/* Prompts */}
         <div
-          className={`${glassClass} p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-emerald-500`}
+          className={`${glassClass} p-4 lg:p-5 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-emerald-500`}
         >
-          <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 rounded-xl w-fit">
-            <MessageSquareQuote size={24} />
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl w-fit">
+            <MessageSquareQuote size={22} />
           </div>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Prompt AI</p>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            <h3 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white">
               {promptsCtrl.data.length}
             </h3>
           </div>
         </div>
 
+        {/* Students */}
         <div
-          className={`${glassClass} p-4 lg:p-6 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-purple-500`}
+          className={`${glassClass} p-4 lg:p-5 flex flex-col sm:flex-row sm:items-center gap-3 border-l-4 border-l-slate-400`}
         >
-          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-500 rounded-xl w-fit">
-            <Users size={24} />
+          <div className="p-2.5 bg-slate-500/10 text-slate-700 dark:text-slate-300 rounded-xl w-fit">
+            <Users size={22} />
           </div>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Học sinh</p>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            <h3 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white">
               {studentsCtrl.data.length}
             </h3>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mt-6">
+        {/* Urgent Tasks Section */}
         <div className={`${glassClass} p-5 lg:p-6`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <Clock size={20} className="text-blue-500" /> Cần làm ngay
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock size={18} className="text-indigo-600 dark:text-indigo-400" /> Cần làm ngay
             </h2>
             <button
               onClick={() => setActiveTab('tasks')}
-              className="text-sm text-blue-500 font-medium py-2 px-3 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-800 min-h-[44px]"
+              className="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-1.5 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors flex items-center gap-1"
             >
-              Xem tất cả
+              Xem tất cả <ChevronRight size={14} />
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {tasks
               .filter((t) => !t.completed)
-              .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
               .slice(0, 4)
               .map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50"
+                  onClick={() => setActiveTab('tasks')}
+                  className="p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition-colors border border-slate-200/50 dark:border-slate-700/50"
                 >
-                  <div className="flex items-center space-x-3 truncate flex-1">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
                     <div
-                      className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
                         task.priority === 'HIGH'
-                          ? 'bg-red-500'
+                          ? 'bg-rose-500'
                           : task.priority === 'MEDIUM'
                           ? 'bg-amber-500'
-                          : 'bg-green-500'
+                          : 'bg-slate-400'
                       }`}
                     />
-                    <span className="text-sm lg:text-base text-slate-700 dark:text-slate-300 truncate font-medium">
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
                       {task.title}
                     </span>
                   </div>
-                  <span
-                    className={`text-xs whitespace-nowrap ml-3 px-2 py-1 rounded-md border ${
-                      task.dueDate < todayStr
-                        ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:border-red-800'
-                        : 'bg-white text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'
-                    }`}
-                  >
-                    {task.dueDate.slice(5)}
+                  <span className="text-[11px] text-slate-400 flex-shrink-0">
+                    {task.dueDate}
                   </span>
                 </div>
               ))}
             {tasks.filter((t) => !t.completed).length === 0 && (
-              <p className="text-slate-500 text-center py-6 text-sm">
-                Tuyệt vời! Không có việc chờ.
+              <p className="text-xs text-slate-400 text-center py-8">
+                Tuyệt vời! Không còn công việc nào chưa hoàn thành.
               </p>
             )}
           </div>
         </div>
 
+        {/* Teaching Journal Quick Peek */}
         <div className={`${glassClass} p-5 lg:p-6`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <BookOpen size={20} className="text-purple-500" /> Nhật ký gần đây
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <BookOpen size={18} className="text-indigo-600 dark:text-indigo-400" /> Nhật ký gần đây
             </h2>
             <button
               onClick={() => setActiveTab('journal')}
-              className="text-sm text-purple-500 font-medium py-2 px-3 rounded-lg hover:bg-purple-50 dark:hover:bg-slate-800 min-h-[44px]"
+              className="text-xs text-indigo-600 dark:text-indigo-400 font-medium py-1.5 px-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors flex items-center gap-1"
             >
-              Xem tất cả
+              Xem tất cả <ChevronRight size={14} />
             </button>
           </div>
-          <div className="space-y-4">
-            {journalCtrl.data
-              .slice()
-              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-              .slice(0, 3)
-              .map((entry) => (
-                <div
-                  key={entry.id}
-                  className="border-l-2 border-purple-400 dark:border-purple-600 pl-4 py-1"
-                >
-                  <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 block mb-1">
-                    {entry.date} - {entry.category}
-                  </span>
-                  <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">
+          <div className="space-y-2.5">
+            {journalCtrl.data.slice(0, 3).map((entry) => (
+              <div
+                key={entry.id}
+                onClick={() => setActiveTab('journal')}
+                className="p-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors border border-slate-200/50 dark:border-slate-700/50 space-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                     {entry.title}
-                  </p>
+                  </h4>
+                  <span className="text-[10px] text-slate-400">{entry.date}</span>
                 </div>
-              ))}
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                  {entry.content}
+                </p>
+              </div>
+            ))}
             {journalCtrl.data.length === 0 && (
-              <p className="text-slate-500 text-center py-6 text-sm">Chưa có nhật ký nào.</p>
+              <p className="text-xs text-slate-400 text-center py-8">
+                Chưa có nhật ký giảng dạy nào được ghi lại.
+              </p>
             )}
           </div>
         </div>
