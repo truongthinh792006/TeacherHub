@@ -5,6 +5,8 @@ import {
   FolderOpen,
   BookOpen,
   Users,
+  CalendarDays,
+  Briefcase,
   Search,
   X,
   LucideIcon,
@@ -31,6 +33,8 @@ export function GlobalSearch() {
     docsCtrl,
     journalCtrl,
     studentsCtrl,
+    ppctCtrl,
+    departmentCtrl,
   } = useAppContext();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +63,83 @@ export function GlobalSearch() {
           tab: 'tasks',
         }),
       );
+
+    ppctCtrl.data.forEach((plan) => {
+      if (plan.title.toLowerCase().includes(lowerTerm)) {
+        res.push({
+          id: plan.id,
+          type: 'Kế hoạch PPCT',
+          icon: CalendarDays,
+          title: plan.title,
+          desc: `Khối ${plan.grade} - ${plan.academicYear}`,
+          tab: 'ppct',
+        });
+      }
+      plan.lessons
+        .filter(
+          (l) =>
+            l.lessonName.toLowerCase().includes(lowerTerm) ||
+            l.topic.toLowerCase().includes(lowerTerm),
+        )
+        .slice(0, 3)
+        .forEach((l) =>
+          res.push({
+            id: l.id,
+            type: `PPCT Lớp ${plan.grade}`,
+            icon: CalendarDays,
+            title: l.lessonName,
+            desc: `Tuần ${l.week} (Tiết ${l.order}) - ${l.topic}`,
+            tab: 'ppct',
+          }),
+        );
+    });
+
+    departmentCtrl.data.forEach((d) => {
+      if (d.recordType === 'EVALUATION') {
+        if (
+          d.teacherName.toLowerCase().includes(lowerTerm) ||
+          d.lessonName.toLowerCase().includes(lowerTerm) ||
+          d.className.toLowerCase().includes(lowerTerm)
+        ) {
+          res.push({
+            id: d.id,
+            type: 'Phiếu dự giờ',
+            icon: Briefcase,
+            title: `${d.teacherName} - ${d.lessonName}`,
+            desc: `Lớp ${d.className} (${d.totalScore}/20đ)`,
+            tab: 'department',
+          });
+        }
+      } else if (d.recordType === 'MEETING') {
+        if (
+          d.title.toLowerCase().includes(lowerTerm) ||
+          d.content.toLowerCase().includes(lowerTerm)
+        ) {
+          res.push({
+            id: d.id,
+            type: 'Biên bản họp tổ',
+            icon: Briefcase,
+            title: d.title,
+            desc: `Ngày ${d.date} - Chủ trì: ${d.chair}`,
+            tab: 'department',
+          });
+        }
+      } else if (d.recordType === 'ASSIGNMENT') {
+        if (
+          d.teacherName.toLowerCase().includes(lowerTerm) ||
+          d.assignedClasses.toLowerCase().includes(lowerTerm)
+        ) {
+          res.push({
+            id: d.id,
+            type: 'Giáo viên tổ',
+            icon: Briefcase,
+            title: d.teacherName,
+            desc: `Dạy: ${d.assignedClasses} (${d.periodsPerWeek} tiết/tuần)`,
+            tab: 'department',
+          });
+        }
+      }
+    });
 
     promptsCtrl.data
       .filter(
@@ -132,6 +213,8 @@ export function GlobalSearch() {
   }, [
     searchTerm,
     tasksCtrl.data,
+    ppctCtrl.data,
+    departmentCtrl.data,
     promptsCtrl.data,
     studentsCtrl.data,
     journalCtrl.data,

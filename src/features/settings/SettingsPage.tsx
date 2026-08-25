@@ -23,6 +23,8 @@ export function SettingsPage() {
     docsCtrl,
     journalCtrl,
     studentsCtrl,
+    ppctCtrl,
+    departmentCtrl,
     showAlert,
     showConfirm,
     glassClass,
@@ -54,6 +56,8 @@ export function SettingsPage() {
         docs: docsCtrl.data,
         journals: journalCtrl.data,
         students: studentsCtrl.data,
+        ppct: ppctCtrl.data,
+        department: departmentCtrl.data,
         darkMode,
       },
     };
@@ -138,6 +142,12 @@ export function SettingsPage() {
       docsCtrl.hardSetData(backupData.docs);
       journalCtrl.hardSetData(backupData.journals);
       studentsCtrl.hardSetData(backupData.students);
+      if (backupData.ppct) {
+        ppctCtrl.hardSetData(backupData.ppct);
+      }
+      if (backupData.department) {
+        departmentCtrl.hardSetData(backupData.department);
+      }
 
       if (backupData.darkMode !== undefined && backupData.darkMode !== darkMode) {
         toggleDarkMode();
@@ -174,7 +184,7 @@ export function SettingsPage() {
 
     showConfirm(
       'Xác nhận hoàn tác',
-      `Khôi phục dữ liệu về trạng thái trước đó (lưu lúc ${formattedTime})?\n\nDữ liệu sẽ gồm: ${info.counts.tasks} việc, ${info.counts.prompts} prompt, ${info.counts.students} học sinh, ${info.counts.journals} nhật ký, ${info.counts.docs} tài liệu.`,
+      `Khôi phục dữ liệu về trạng thái trước đó (lưu lúc ${formattedTime})?\n\nDữ liệu sẽ gồm: ${info.counts.tasks} việc, ${info.counts.prompts} prompt, ${info.counts.students} học sinh, ${info.counts.journals} nhật ký, ${info.counts.docs} tài liệu, ${info.counts.ppct} PPCT, ${info.counts.department || 0} hồ sơ tổ.`,
       () => {
         const restored = StorageService.restoreSafetySnapshot();
         if (restored) {
@@ -183,6 +193,12 @@ export function SettingsPage() {
           docsCtrl.hardSetData(restored.docs);
           journalCtrl.hardSetData(restored.journals);
           studentsCtrl.hardSetData(restored.students);
+          if (restored.ppct) {
+            ppctCtrl.hardSetData(restored.ppct);
+          }
+          if (restored.department) {
+            departmentCtrl.hardSetData(restored.department);
+          }
           if (restored.darkMode !== undefined && restored.darkMode !== darkMode) {
             toggleDarkMode();
           }
@@ -251,7 +267,7 @@ export function SettingsPage() {
                     Bản sao lưu an toàn tự động
                   </p>
                   <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                    Lưu lúc: {new Date(snapshotInfo.timestamp).toLocaleString('vi-VN')} ({snapshotInfo.counts.tasks} việc, {snapshotInfo.counts.prompts} prompt, {snapshotInfo.counts.students} học sinh)
+                    Lưu lúc: {new Date(snapshotInfo.timestamp).toLocaleString('vi-VN')} ({snapshotInfo.counts.tasks} việc, {snapshotInfo.counts.prompts} prompt, {snapshotInfo.counts.students} HS, {snapshotInfo.counts.ppct || 0} PPCT, {snapshotInfo.counts.department || 0} hồ sơ tổ)
                   </p>
                 </div>
               </div>
@@ -339,6 +355,20 @@ export function SettingsPage() {
                         <td className="p-3 text-center text-slate-500">{studentsCtrl.data.length}</td>
                         <td className="p-3 text-center font-bold text-blue-600 dark:text-blue-400">
                           {previewResult.summary.students}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-medium">Phân phối chương trình (PPCT)</td>
+                        <td className="p-3 text-center text-slate-500">{ppctCtrl.data.length}</td>
+                        <td className="p-3 text-center font-bold text-blue-600 dark:text-blue-400">
+                          {previewResult.summary.ppct}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-medium">Hồ sơ Tổ chuyên môn</td>
+                        <td className="p-3 text-center text-slate-500">{departmentCtrl.data.length}</td>
+                        <td className="p-3 text-center font-bold text-blue-600 dark:text-blue-400">
+                          {previewResult.summary.department}
                         </td>
                       </tr>
                       <tr>

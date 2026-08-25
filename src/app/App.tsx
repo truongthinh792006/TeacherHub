@@ -13,6 +13,8 @@ import {
   LogIn,
   Save,
   DownloadCloud,
+  CalendarDays,
+  Briefcase,
 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { useStorageController } from '../hooks/useStorageController';
@@ -25,14 +27,19 @@ import { JournalPage } from '../features/journal/JournalPage';
 import { DocumentCenter } from '../features/documents/DocumentCenter';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { AIToolsPage } from '../features/ai-tools/AIToolsPage';
+import { PPCTPage } from '../features/ppct/PPCTPage';
+import { DepartmentPage } from '../features/department/DepartmentPage';
+import { presetGrade10 } from '../features/ppct/ppctPresets';
 import { GlobalSearch } from '../components/ui/GlobalSearch';
 import { AppModal } from '../components/ui/AppModal';
 import {
   AppContextType,
+  DepartmentRecord,
   DocumentLink,
   GlobalFocus,
   JournalEntry,
   ModalConfig,
+  PPCTPlan,
   Prompt,
   Student,
   Task,
@@ -83,6 +90,84 @@ const initialPrompts: Prompt[] = [
   },
 ];
 
+const initialPPCT: PPCTPlan[] = [
+  {
+    ...presetGrade10,
+    id: 'plan-default-10',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+];
+
+const initialDepartmentRecords: DepartmentRecord[] = [
+  {
+    id: 'eval-1',
+    recordType: 'EVALUATION',
+    teacherName: 'Nguyễn Văn A',
+    observerName: 'Tổ trưởng Chuyên môn',
+    className: '10A1',
+    lessonName: 'Bài 13: Cấu trúc lặp for trong Python',
+    date: localDateString(),
+    period: 2,
+    scorePlanning: 4.5,
+    scoreTeacherActivity: 4.5,
+    scoreStudentActivity: 4.0,
+    scoreEffectiveness: 4.0,
+    totalScore: 17.0,
+    rating: 'GIOI',
+    strengths: 'Giáo án thiết kế theo CV 5512 rõ ràng, học sinh thực hành code sôi nổi trên Thonny IDE.',
+    weaknesses: 'Cần bao quát thêm một số học sinh ở dãy bàn cuối phòng máy.',
+    recommendations: 'Tăng cường các bài tập phân hóa cho học sinh hoàn thành sớm nhiệm vụ.',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
+    id: 'meet-1',
+    recordType: 'MEETING',
+    title: 'Biên bản Sinh hoạt chuyên môn theo Nghiên cứu bài học - Tháng 10',
+    date: localDateString(),
+    time: '14:00 - 16:30',
+    location: 'Phòng máy tính 1',
+    chair: 'Tổ trưởng Chuyên môn',
+    secretary: 'Thư ký Tổ',
+    attendees: 'Toàn thể Giáo viên trong Tổ Tin học',
+    absent: 'Không',
+    topic: 'LESSON_STUDY',
+    content: '1. Đánh giá tiết dạy minh họa của Thầy Nguyễn Văn A.\n2. Phân tích khó khăn của học sinh khi làm quen với vòng lặp trong Python.\n3. Thống nhất điều chỉnh tiến trình dạy học phần Luyện tập.',
+    resolutions: 'Nhất trí thông qua kế hoạch bài dạy đã chỉnh sửa để áp dụng cho toàn khối 10.',
+    assignments: 'Thầy A nộp hồ sơ bài dạy minh họa lưu trữ chuyên môn.',
+    nextMeetingDate: localDateAfter(14 * 86400000),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
+    id: 'assign-1',
+    recordType: 'ASSIGNMENT',
+    teacherName: 'Nguyễn Văn A',
+    email: 'nguyenvana@gmail.com',
+    phone: '0912 345 678',
+    assignedClasses: '10A1, 10A2, 10A3, 10A4',
+    periodsPerWeek: 16,
+    labSchedule: 'Sáng Thứ 3 (Tiết 1-3 PM1), Chiều Thứ 5 (Tiết 1-2 PM1)',
+    notes: 'Phụ trách Phòng máy 1 & Đội tuyển HSG Tin học Khối 10',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
+    id: 'assign-2',
+    recordType: 'ASSIGNMENT',
+    teacherName: 'Trần Thị B',
+    email: 'tranthib@gmail.com',
+    phone: '0988 765 432',
+    assignedClasses: '11A1, 11A2, 12A1, 12A2',
+    periodsPerWeek: 16,
+    labSchedule: 'Sáng Thứ 4 (Tiết 1-4 PM2), Chiều Thứ 6 (Tiết 2-4 PM2)',
+    notes: 'Phụ trách Phòng máy 2 & Thư ký Hội đồng Chuyên môn',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+];
+
 const navItems = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
   { id: 'tasks', icon: CheckSquare, label: 'Công việc' },
@@ -91,6 +176,8 @@ const navItems = [
 ];
 
 const moreNavItems = [
+  { id: 'ppct', icon: CalendarDays, label: 'PPCT' },
+  { id: 'department', icon: Briefcase, label: 'Tổ CM' },
   { id: 'journal', icon: BookOpen, label: 'Nhật ký' },
   { id: 'docs', icon: FolderOpen, label: 'Tài liệu' },
   { id: 'ai-tools', icon: Wand2, label: 'Công cụ AI' },
@@ -162,6 +249,8 @@ export default function App() {
   const docsCtrl = useStorageController<DocumentLink>('docs', []);
   const journalCtrl = useStorageController<JournalEntry>('journals', []);
   const studentsCtrl = useStorageController<Student>('students', []);
+  const ppctCtrl = useStorageController<PPCTPlan>('ppct', initialPPCT);
+  const departmentCtrl = useStorageController<DepartmentRecord>('department', initialDepartmentRecords);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
@@ -187,6 +276,8 @@ export default function App() {
     docsCtrl,
     journalCtrl,
     studentsCtrl,
+    ppctCtrl,
+    departmentCtrl,
     showAlert,
     showConfirm,
     closeModal,
@@ -209,6 +300,10 @@ export default function App() {
       <PromptLibrary />
     ) : activeTab === 'students' ? (
       <StudentsPage />
+    ) : activeTab === 'ppct' ? (
+      <PPCTPage />
+    ) : activeTab === 'department' ? (
+      <DepartmentPage />
     ) : activeTab === 'journal' ? (
       <JournalPage />
     ) : activeTab === 'docs' ? (
@@ -419,7 +514,7 @@ export default function App() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6" />
-              <div className="grid grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
                 {moreNavItems.map((item) => (
                   <button
                     key={item.id}
@@ -438,7 +533,7 @@ export default function App() {
                     >
                       <item.icon size={24} />
                     </div>
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
                       {item.label}
                     </span>
                   </button>

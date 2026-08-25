@@ -47,12 +47,103 @@ export interface DocumentLink extends BaseRecord {
   description: string;
 }
 
+// PPCT (Phân phối chương trình) Types
+export type GradeLevel = '10' | '11' | '12';
+export type TrackType = 'GENERAL' | 'ICT' | 'CS';
+export type LessonStatus = 'PENDING' | 'COMPLETED' | 'DELAYED' | 'MAKEUP';
+export type LessonType = 'LESSON' | 'PRACTICE' | 'MIDTERM' | 'FINAL' | 'REVIEW' | 'PROJECT';
+
+export interface PPCTLesson {
+  id: string;
+  order: number;
+  week: number;
+  semester: 1 | 2;
+  topic: string;
+  lessonName: string;
+  periods: number;
+  type: LessonType;
+  status: LessonStatus;
+  scheduledDate?: string;
+  completedDate?: string;
+  notes?: string;
+}
+
+export interface PPCTPlan extends BaseRecord {
+  title: string;
+  grade: GradeLevel;
+  track: TrackType;
+  academicYear: string;
+  assignedClasses: string;
+  totalPeriods: number;
+  totalWeeks: number;
+  isDefault?: boolean;
+  lessons: PPCTLesson[];
+}
+
+// Department Management Suite Types (Tổ chuyên môn)
+export type EvaluationRating = 'GIOI' | 'KHA' | 'DAT' | 'CHUA_DAT';
+export type MeetingTopic = 'LESSON_STUDY' | 'EXAM_MATRIX' | 'SPECIALIZED_TOPIC' | 'GENERAL';
+
+export interface LessonEvaluationRecord extends BaseRecord {
+  recordType: 'EVALUATION';
+  teacherName: string;
+  observerName: string;
+  className: string;
+  lessonName: string;
+  date: string;
+  period: number;
+  scorePlanning: number; // Kế hoạch & tài liệu (max 5đ)
+  scoreTeacherActivity: number; // Hoạt động giáo viên (max 5đ)
+  scoreStudentActivity: number; // Hoạt động học sinh (max 5đ)
+  scoreEffectiveness: number; // Hiệu quả bài dạy (max 5đ)
+  totalScore: number; // max 20đ
+  rating: EvaluationRating;
+  strengths: string;
+  weaknesses: string;
+  recommendations: string;
+}
+
+export interface DepartmentMeetingRecord extends BaseRecord {
+  recordType: 'MEETING';
+  title: string;
+  date: string;
+  time?: string;
+  location?: string;
+  chair: string;
+  secretary: string;
+  attendees: string;
+  absent?: string;
+  topic: MeetingTopic;
+  content: string;
+  resolutions: string;
+  assignments?: string;
+  nextMeetingDate?: string;
+}
+
+export interface TeacherAssignmentRecord extends BaseRecord {
+  recordType: 'ASSIGNMENT';
+  teacherName: string;
+  email?: string;
+  phone?: string;
+  assignedClasses: string;
+  periodsPerWeek: number;
+  labSchedule: string;
+  notes?: string;
+}
+
+export type DepartmentRecord =
+  | LessonEvaluationRecord
+  | DepartmentMeetingRecord
+  | TeacherAssignmentRecord;
+
 export interface BackupPayload {
   tasks: Task[];
   prompts: Prompt[];
   docs: DocumentLink[];
   journals: JournalEntry[];
   students: Student[];
+  ppct?: PPCTPlan[];
+  department?: DepartmentRecord[];
   darkMode?: boolean;
 }
 
@@ -81,6 +172,8 @@ export interface SafetySnapshotInfo {
     docs: number;
     journals: number;
     students: number;
+    ppct: number;
+    department: number;
   };
 }
 
@@ -94,6 +187,8 @@ export interface BackupValidationResult {
     docs: number;
     journals: number;
     students: number;
+    ppct: number;
+    department: number;
   };
 }
 
@@ -133,6 +228,8 @@ export interface AppContextType {
   docsCtrl: StorageController<DocumentLink>;
   journalCtrl: StorageController<JournalEntry>;
   studentsCtrl: StorageController<Student>;
+  ppctCtrl: StorageController<PPCTPlan>;
+  departmentCtrl: StorageController<DepartmentRecord>;
   showAlert: (title: string, message: string) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   closeModal: () => void;
@@ -141,4 +238,3 @@ export interface AppContextType {
   btnPrimary: string;
   btnSecondary: string;
 }
-

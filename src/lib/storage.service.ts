@@ -1,7 +1,9 @@
 import {
   BackupPayload,
+  DepartmentRecord,
   DocumentLink,
   JournalEntry,
+  PPCTPlan,
   Prompt,
   SafetySnapshot,
   SafetySnapshotInfo,
@@ -100,10 +102,12 @@ export const StorageService = {
     const docs = StorageService.getAll<DocumentLink>('docs');
     const journals = StorageService.getAll<JournalEntry>('journals');
     const students = StorageService.getAll<Student>('students');
+    const ppct = StorageService.getAll<PPCTPlan>('ppct');
+    const department = StorageService.getAll<DepartmentRecord>('department');
     const darkModeRaw = window.localStorage.getItem('thp_darkMode');
     const darkMode = darkModeRaw === 'true';
 
-    return { tasks, prompts, docs, journals, students, darkMode };
+    return { tasks, prompts, docs, journals, students, ppct, department, darkMode };
   },
 
   createSafetySnapshot: (note?: string): boolean => {
@@ -151,6 +155,8 @@ export const StorageService = {
           docs: Array.isArray(parsed.data.docs) ? parsed.data.docs.length : 0,
           journals: Array.isArray(parsed.data.journals) ? parsed.data.journals.length : 0,
           students: Array.isArray(parsed.data.students) ? parsed.data.students.length : 0,
+          ppct: Array.isArray(parsed.data.ppct) ? parsed.data.ppct.length : 0,
+          department: Array.isArray(parsed.data.department) ? parsed.data.department.length : 0,
         },
       };
     } catch (error) {
@@ -194,6 +200,12 @@ export const StorageService = {
       if (payload.students !== undefined) {
         window.localStorage.setItem(StorageService.getKey('students'), JSON.stringify(payload.students));
       }
+      if (payload.ppct !== undefined) {
+        window.localStorage.setItem(StorageService.getKey('ppct'), JSON.stringify(payload.ppct));
+      }
+      if (payload.department !== undefined) {
+        window.localStorage.setItem(StorageService.getKey('department'), JSON.stringify(payload.department));
+      }
       if (payload.darkMode !== undefined) {
         window.localStorage.setItem('thp_darkMode', String(payload.darkMode));
       }
@@ -207,6 +219,12 @@ export const StorageService = {
         window.localStorage.setItem(StorageService.getKey('docs'), JSON.stringify(previousState.docs));
         window.localStorage.setItem(StorageService.getKey('journals'), JSON.stringify(previousState.journals));
         window.localStorage.setItem(StorageService.getKey('students'), JSON.stringify(previousState.students));
+        if (previousState.ppct !== undefined) {
+          window.localStorage.setItem(StorageService.getKey('ppct'), JSON.stringify(previousState.ppct));
+        }
+        if (previousState.department !== undefined) {
+          window.localStorage.setItem(StorageService.getKey('department'), JSON.stringify(previousState.department));
+        }
         if (previousState.darkMode !== undefined) {
           window.localStorage.setItem('thp_darkMode', String(previousState.darkMode));
         }
