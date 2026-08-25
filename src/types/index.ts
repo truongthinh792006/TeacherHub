@@ -92,11 +92,11 @@ export interface LessonEvaluationRecord extends BaseRecord {
   lessonName: string;
   date: string;
   period: number;
-  scorePlanning: number; // Kế hoạch & tài liệu (max 5đ)
-  scoreTeacherActivity: number; // Hoạt động giáo viên (max 5đ)
-  scoreStudentActivity: number; // Hoạt động học sinh (max 5đ)
-  scoreEffectiveness: number; // Hiệu quả bài dạy (max 5đ)
-  totalScore: number; // max 20đ
+  scorePlanning: number;
+  scoreTeacherActivity: number;
+  scoreStudentActivity: number;
+  scoreEffectiveness: number;
+  totalScore: number;
   rating: EvaluationRating;
   strengths: string;
   weaknesses: string;
@@ -135,6 +135,28 @@ export type DepartmentRecord =
   | LessonEvaluationRecord
   | DepartmentMeetingRecord
   | TeacherAssignmentRecord;
+
+// Google Drive Sync Types
+export interface GoogleUserProfile {
+  name: string;
+  email: string;
+  picture?: string;
+}
+
+export interface GoogleDriveSyncState {
+  isSignedIn: boolean;
+  userProfile: GoogleUserProfile | null;
+  isSyncing: boolean;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  clientId: string;
+  setClientId: (clientId: string) => void;
+  login: () => Promise<void>;
+  logout: () => void;
+  syncNow: () => Promise<boolean>;
+  uploadToDrive: () => Promise<boolean>;
+  downloadFromDrive: () => Promise<boolean>;
+}
 
 export interface BackupPayload {
   tasks: Task[];
@@ -230,6 +252,7 @@ export interface AppContextType {
   studentsCtrl: StorageController<Student>;
   ppctCtrl: StorageController<PPCTPlan>;
   departmentCtrl: StorageController<DepartmentRecord>;
+  gdrive: GoogleDriveSyncState;
   showAlert: (title: string, message: string) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   closeModal: () => void;

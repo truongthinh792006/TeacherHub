@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -15,9 +15,13 @@ import {
   DownloadCloud,
   CalendarDays,
   Briefcase,
+  Cloud,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { useStorageController } from '../hooks/useStorageController';
+import { useGoogleDriveSync } from '../hooks/useGoogleDriveSync';
 import { localDateAfter, localDateString } from '../lib/date';
 import { Dashboard } from '../features/dashboard/Dashboard';
 import { TasksPage } from '../features/tasks/TasksPage';
@@ -37,6 +41,7 @@ import {
   DepartmentRecord,
   DocumentLink,
   GlobalFocus,
+  GoogleDriveSyncState,
   JournalEntry,
   ModalConfig,
   PPCTPlan,
@@ -184,12 +189,53 @@ const moreNavItems = [
   { id: 'settings', icon: SettingsIcon, label: 'Cài đặt' },
 ];
 
-function SyncIndicator() {
+function HeaderSyncIndicator({ gdrive }: { gdrive: GoogleDriveSyncState }) {
+  if (!gdrive.isSignedIn) {
+    return (
+      <button
+        onClick={() => gdrive.login()}
+        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 transition-colors"
+        title="Nhấn để kết nối Google Drive"
+      >
+        <Cloud size={14} />
+        <span className="hidden sm:inline">Kết nối Drive</span>
+      </button>
+    );
+  }
+
+  const formatLastSync = (iso: string | null) => {
+    if (!iso) return 'Chưa đồng bộ';
+    const d = new Date(iso);
+    const hours = d.getHours().toString().padStart(2, '0');
+    const mins = d.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${mins}`;
+  };
+
   return (
-    <div className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-      <Save size={14} className="text-slate-500" />{' '}
-      <span className="hidden sm:inline">Đã lưu cục bộ</span>
-    </div>
+    <button
+      onClick={() => gdrive.syncNow()}
+      disabled={gdrive.isSyncing}
+      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
+        gdrive.isSyncing
+          ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300'
+          : 'bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+      }`}
+      title={
+        gdrive.lastSyncedAt
+          ? `Đã đồng bộ Drive lúc ${new Date(gdrive.lastSyncedAt).toLocaleString('vi-VN')} (Nhấn để đồng bộ lại)`
+          : 'Nhấn để đồng bộ ngay với Google Drive'
+      }
+    >
+      <RefreshCw
+        size={13}
+        className={gdrive.isSyncing ? 'animate-spin text-blue-600' : 'text-emerald-600'}
+      />
+      <span className="hidden sm:inline">
+        {gdrive.isSyncing
+          ? 'Đang đồng bộ...'
+          : `Drive (${formatLastSync(gdrive.lastSyncedAt)})`}
+      </span>
+    </button>
   );
 }
 
@@ -252,15 +298,35 @@ export default function App() {
   const ppctCtrl = useStorageController<PPCTPlan>('ppct', initialPPCT);
   const departmentCtrl = useStorageController<DepartmentRecord>('department', initialDepartmentRecords);
 
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
-
-  const showAlert = (title: string, message: string) =>
+  const showAlert = useCallback((title: string, message: string) => {
     setModalConfig({ isOpen: true, title, message, type: 'alert', onConfirm: null });
+  }, []);
 
-  const showConfirm = (title: string, message: string, onConfirm: () => void) =>
+  const showConfirm = useCallback((title: string, message: string, onConfirm: () => void) => {
     setModalConfig({ isOpen: true, title, message, type: 'confirm', onConfirm });
+  }, []);
 
-  const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  const closeModal = useCallback(() => {
+    setModalConfig((prev) => ({ ...prev, isOpen: false }));
+  }, []);
+
+  const refreshAllControllers = useCallback(() => {
+    tasksCtrl.refresh();
+    promptsCtrl.refresh();
+    docsCtrl.refresh();
+    journalCtrl.refresh();
+    studentsCtrl.refresh();
+    ppctCtrl.refresh();
+    departmentCtrl.refresh();
+  }, [tasksCtrl, promptsCtrl, docsCtrl, journalCtrl, studentsCtrl, ppctCtrl, departmentCtrl]);
+
+  // Google Drive Sync hook
+  const gdrive = useGoogleDriveSync({
+    onDataRestored: refreshAllControllers,
+    showAlert,
+  });
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   const contextValue: AppContextType = {
     darkMode,
@@ -278,6 +344,7 @@ export default function App() {
     studentsCtrl,
     ppctCtrl,
     departmentCtrl,
+    gdrive,
     showAlert,
     showConfirm,
     closeModal,
@@ -409,16 +476,41 @@ export default function App() {
               </div>
             )}
 
+            {/* User & Cloud Sync Footer */}
             <div className="p-4 border-t border-slate-200/50 dark:border-slate-800">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
-                <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                  <LogIn size={20} className="text-slate-500" />
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2">
+                <div className="flex items-center gap-3">
+                  {gdrive.isSignedIn && gdrive.userProfile?.picture ? (
+                    <img
+                      src={gdrive.userProfile.picture}
+                      alt={gdrive.userProfile.name}
+                      className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold text-sm">
+                      {gdrive.isSignedIn && gdrive.userProfile ? (
+                        gdrive.userProfile.name.charAt(0).toUpperCase()
+                      ) : (
+                        <LogIn size={16} />
+                      )}
+                    </div>
+                  )}
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                      {gdrive.isSignedIn && gdrive.userProfile
+                        ? gdrive.userProfile.name
+                        : 'Local User'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {gdrive.isSignedIn && gdrive.userProfile
+                        ? gdrive.userProfile.email
+                        : 'Lưu trữ cục bộ'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
-                    Local User
-                  </p>
-                  <SyncIndicator />
+
+                <div className="pt-1 flex items-center justify-between">
+                  <HeaderSyncIndicator gdrive={gdrive} />
                 </div>
               </div>
             </div>
@@ -432,8 +524,8 @@ export default function App() {
                   T
                 </div>
               </div>
-              <div className="hidden lg:flex items-center">
-                <SyncIndicator />
+              <div className="hidden lg:flex items-center gap-2">
+                <HeaderSyncIndicator gdrive={gdrive} />
               </div>
               <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3">
                 {/* Install App Header Button */}
@@ -556,7 +648,7 @@ export default function App() {
               )}
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-2">
-                <SyncIndicator />
+                <HeaderSyncIndicator gdrive={gdrive} />
               </div>
             </div>
           </div>
