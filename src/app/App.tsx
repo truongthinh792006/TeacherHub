@@ -17,11 +17,13 @@ import {
   Briefcase,
   Cloud,
   RefreshCw,
-  AlertCircle,
+  Flame,
+  User as UserIcon,
 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { useStorageController } from '../hooks/useStorageController';
 import { useGoogleDriveSync } from '../hooks/useGoogleDriveSync';
+import { useFirebaseAuthSync } from '../hooks/useFirebaseAuthSync';
 import { localDateAfter, localDateString } from '../lib/date';
 import { Dashboard } from '../features/dashboard/Dashboard';
 import { TasksPage } from '../features/tasks/TasksPage';
@@ -36,10 +38,12 @@ import { DepartmentPage } from '../features/department/DepartmentPage';
 import { presetGrade10 } from '../features/ppct/ppctPresets';
 import { GlobalSearch } from '../components/ui/GlobalSearch';
 import { AppModal } from '../components/ui/AppModal';
+import { AuthModal } from '../components/auth/AuthModal';
 import {
   AppContextType,
   DepartmentRecord,
   DocumentLink,
+  FirebaseAuthSyncState,
   GlobalFocus,
   GoogleDriveSyncState,
   JournalEntry,
@@ -189,22 +193,28 @@ const moreNavItems = [
   { id: 'settings', icon: SettingsIcon, label: 'Cài đặt' },
 ];
 
-function HeaderSyncIndicator({ gdrive }: { gdrive: GoogleDriveSyncState }) {
-  if (!gdrive.isSignedIn) {
+function HeaderCloudSyncIndicator({
+  firebaseAuth,
+  openAuthModal,
+}: {
+  firebaseAuth: FirebaseAuthSyncState;
+  openAuthModal: () => void;
+}) {
+  if (!firebaseAuth.isAuthenticated) {
     return (
       <button
-        onClick={() => gdrive.login()}
-        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 transition-colors"
-        title="Nhấn để kết nối Google Drive"
+        onClick={openAuthModal}
+        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 transition-colors"
+        title="Đăng nhập để đồng bộ Realtime qua Firebase Cloud"
       >
-        <Cloud size={14} />
-        <span className="hidden sm:inline">Kết nối Drive</span>
+        <Flame size={14} className="text-amber-500" />
+        <span className="hidden sm:inline">Đăng nhập Cloud</span>
       </button>
     );
   }
 
   const formatLastSync = (iso: string | null) => {
-    if (!iso) return 'Chưa đồng bộ';
+    if (!iso) return 'Realtime';
     const d = new Date(iso);
     const hours = d.getHours().toString().padStart(2, '0');
     const mins = d.getMinutes().toString().padStart(2, '0');
@@ -213,27 +223,27 @@ function HeaderSyncIndicator({ gdrive }: { gdrive: GoogleDriveSyncState }) {
 
   return (
     <button
-      onClick={() => gdrive.syncNow()}
-      disabled={gdrive.isSyncing}
+      onClick={() => firebaseAuth.syncNow()}
+      disabled={firebaseAuth.isSyncing}
       className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
-        gdrive.isSyncing
-          ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300'
+        firebaseAuth.isSyncing
+          ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200'
           : 'bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
       }`}
       title={
-        gdrive.lastSyncedAt
-          ? `Đã đồng bộ Drive lúc ${new Date(gdrive.lastSyncedAt).toLocaleString('vi-VN')} (Nhấn để đồng bộ lại)`
-          : 'Nhấn để đồng bộ ngay với Google Drive'
+        firebaseAuth.lastSyncedAt
+          ? `Đã đồng bộ Cloud lúc ${new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')} (Nhấn để đồng bộ ngay)`
+          : 'Đồng bộ đám mây Realtime'
       }
     >
       <RefreshCw
         size={13}
-        className={gdrive.isSyncing ? 'animate-spin text-blue-600' : 'text-emerald-600'}
+        className={firebaseAuth.isSyncing ? 'animate-spin text-amber-600' : 'text-emerald-600'}
       />
       <span className="hidden sm:inline">
-        {gdrive.isSyncing
+        {firebaseAuth.isSyncing
           ? 'Đang đồng bộ...'
-          : `Drive (${formatLastSync(gdrive.lastSyncedAt)})`}
+          : `Cloud (${formatLastSync(firebaseAuth.lastSyncedAt)})`}
       </span>
     </button>
   );
@@ -251,6 +261,7 @@ export default function App() {
     type: 'alert',
     onConfirm: null,
   });
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState<boolean>(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState<boolean>(false);
   const [globalFocus, setGlobalFocus] = useState<GlobalFocus | null>(null);
@@ -326,6 +337,14 @@ export default function App() {
     showAlert,
   });
 
+  // Firebase Auth & Cloud Firestore Sync hook
+  const firebaseAuth = useFirebaseAuthSync({
+    onDataRestored: refreshAllControllers,
+    showAlert,
+  });
+
+  const openAuthModal = () => setAuthModalOpen(true);
+
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
   const contextValue: AppContextType = {
@@ -345,6 +364,8 @@ export default function App() {
     ppctCtrl,
     departmentCtrl,
     gdrive,
+    firebaseAuth,
+    openAuthModal,
     showAlert,
     showConfirm,
     closeModal,
@@ -480,16 +501,22 @@ export default function App() {
             <div className="p-4 border-t border-slate-200/50 dark:border-slate-800">
               <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2">
                 <div className="flex items-center gap-3">
-                  {gdrive.isSignedIn && gdrive.userProfile?.picture ? (
+                  {firebaseAuth.isAuthenticated && firebaseAuth.user?.photoURL ? (
+                    <img
+                      src={firebaseAuth.user.photoURL}
+                      alt={firebaseAuth.user.displayName || ''}
+                      className="w-9 h-9 rounded-full border border-amber-300"
+                    />
+                  ) : gdrive.isSignedIn && gdrive.userProfile?.picture ? (
                     <img
                       src={gdrive.userProfile.picture}
                       alt={gdrive.userProfile.name}
                       className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold text-sm">
-                      {gdrive.isSignedIn && gdrive.userProfile ? (
-                        gdrive.userProfile.name.charAt(0).toUpperCase()
+                    <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold text-sm">
+                      {firebaseAuth.isAuthenticated && firebaseAuth.user ? (
+                        (firebaseAuth.user.displayName || 'G').charAt(0).toUpperCase()
                       ) : (
                         <LogIn size={16} />
                       )}
@@ -497,12 +524,16 @@ export default function App() {
                   )}
                   <div className="flex-1 overflow-hidden">
                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                      {gdrive.isSignedIn && gdrive.userProfile
+                      {firebaseAuth.isAuthenticated && firebaseAuth.user
+                        ? firebaseAuth.user.displayName
+                        : gdrive.isSignedIn && gdrive.userProfile
                         ? gdrive.userProfile.name
                         : 'Local User'}
                     </p>
                     <p className="text-[10px] text-slate-400 truncate">
-                      {gdrive.isSignedIn && gdrive.userProfile
+                      {firebaseAuth.isAuthenticated && firebaseAuth.user
+                        ? firebaseAuth.user.email
+                        : gdrive.isSignedIn && gdrive.userProfile
                         ? gdrive.userProfile.email
                         : 'Lưu trữ cục bộ'}
                     </p>
@@ -510,7 +541,10 @@ export default function App() {
                 </div>
 
                 <div className="pt-1 flex items-center justify-between">
-                  <HeaderSyncIndicator gdrive={gdrive} />
+                  <HeaderCloudSyncIndicator
+                    firebaseAuth={firebaseAuth}
+                    openAuthModal={openAuthModal}
+                  />
                 </div>
               </div>
             </div>
@@ -525,7 +559,10 @@ export default function App() {
                 </div>
               </div>
               <div className="hidden lg:flex items-center gap-2">
-                <HeaderSyncIndicator gdrive={gdrive} />
+                <HeaderCloudSyncIndicator
+                  firebaseAuth={firebaseAuth}
+                  openAuthModal={openAuthModal}
+                />
               </div>
               <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3">
                 {/* Install App Header Button */}
@@ -648,7 +685,10 @@ export default function App() {
               )}
 
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-2">
-                <HeaderSyncIndicator gdrive={gdrive} />
+                <HeaderCloudSyncIndicator
+                  firebaseAuth={firebaseAuth}
+                  openAuthModal={openAuthModal}
+                />
               </div>
             </div>
           </div>
@@ -656,6 +696,7 @@ export default function App() {
 
         <GlobalSearch />
         <AppModal modalConfig={modalConfig} closeModal={closeModal} />
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
       </div>
     </AppProvider>
   );

@@ -18,6 +18,9 @@ import {
   LogOut,
   RefreshCw,
   Sparkles,
+  Flame,
+  ShieldCheck,
+  User,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import { localDateString } from '../../lib/date';
@@ -35,6 +38,8 @@ export function SettingsPage() {
     ppctCtrl,
     departmentCtrl,
     gdrive,
+    firebaseAuth,
+    openAuthModal,
     showAlert,
     showConfirm,
     glassClass,
@@ -250,15 +255,123 @@ export function SettingsPage() {
           </button>
         </div>
 
-        {/* Đồng bộ Google Drive */}
+        {/* 1. Đồng bộ Firebase Cloud Firestore (Real-time) */}
         <div className="pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <Cloud className="text-blue-500" size={20} /> Đồng bộ Google Drive
+                <Flame className="text-amber-500" size={20} /> Firebase Cloud (Đồng bộ Realtime)
               </h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                Sao lưu và đồng bộ dữ liệu tự động giữa máy tính và điện thoại.
+                Lưu trữ tự động trên Google Cloud Firestore, đồng bộ tức thì đa thiết bị.
+              </p>
+            </div>
+            {firebaseAuth.isAuthenticated ? (
+              <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
+                <CheckCircle2 size={14} /> Trực tuyến
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
+                Chưa đăng nhập
+              </span>
+            )}
+          </div>
+
+          {firebaseAuth.isAuthenticated && firebaseAuth.user ? (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {firebaseAuth.user.photoURL ? (
+                  <img
+                    src={firebaseAuth.user.photoURL}
+                    alt={firebaseAuth.user.displayName || ''}
+                    className="w-11 h-11 rounded-full border-2 border-amber-300 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+                    {(firebaseAuth.user.displayName || 'G').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                    {firebaseAuth.user.displayName}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{firebaseAuth.user.email}</p>
+                  {firebaseAuth.lastSyncedAt && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
+                      Cloud Sync: {new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => firebaseAuth.syncNow()}
+                  disabled={firebaseAuth.isSyncing}
+                  className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm transition-all disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={firebaseAuth.isSyncing ? 'animate-spin' : ''} />
+                  <span>{firebaseAuth.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ Realtime'}</span>
+                </button>
+                <button
+                  onClick={() => firebaseAuth.logout()}
+                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors min-h-[38px]"
+                  title="Đăng xuất Firebase"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Đăng nhập tài khoản để đồng bộ Realtime
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Tự động lưu và đồng bộ tức thì giữa máy tính ở trường và thiết bị ở nhà.
+                </p>
+              </div>
+              <button
+                onClick={openAuthModal}
+                className="px-4 py-2.5 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex items-center justify-center gap-2 shadow-sm transition-all min-h-[40px]"
+              >
+                <LogIn size={16} />
+                <span>Đăng nhập / Đăng ký</span>
+              </button>
+            </div>
+          )}
+
+          {/* Force Actions when signed in to Firebase */}
+          {firebaseAuth.isAuthenticated && (
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => firebaseAuth.forceUpload()}
+                disabled={firebaseAuth.isSyncing}
+                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <CloudUpload size={14} className="text-amber-500" /> Tải lên Cloud (Upload)
+              </button>
+              <button
+                onClick={() => firebaseAuth.forceDownload()}
+                disabled={firebaseAuth.isSyncing}
+                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <CloudDownload size={14} className="text-emerald-500" /> Tải về Máy (Download)
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 2. Đồng bộ Google Drive */}
+        <div className="pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <Cloud className="text-blue-500" size={20} /> Sao lưu Google Drive (File JSON)
+              </h3>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Sao lưu tệp tin dữ liệu định kỳ vào Google Drive cá nhân của bạn.
               </p>
             </div>
             {gdrive.isSignedIn ? (
@@ -322,10 +435,10 @@ export function SettingsPage() {
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-0.5">
                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Đăng nhập tài khoản Google để lưu trữ đám mây
+                  Lưu trữ backup vào Google Drive cá nhân
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Dữ liệu được lưu trữ riêng tư trên tài khoản Google Drive cá nhân của bạn.
+                  Dữ liệu được lưu trữ dưới dạng file JSON riêng tư trên Google Drive của bạn.
                 </p>
               </div>
               <button
@@ -402,7 +515,7 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Sao lưu dữ liệu Local */}
+        {/* 3. Sao lưu dữ liệu Local */}
         <div className="pb-6 border-b border-slate-200 dark:border-slate-700">
           <h3 className="font-bold text-slate-800 dark:text-white mb-1">
             Sao lưu Dữ liệu Cục bộ (Local JSON)
@@ -460,7 +573,7 @@ export function SettingsPage() {
             T
           </div>
           <p className="font-bold text-slate-800 dark:text-white">Teacher Hub Pro</p>
-          <p className="text-xs text-slate-500 mt-1">Version 1.2.0 (Google Drive & PWA Offline)</p>
+          <p className="text-xs text-slate-500 mt-1">Version 1.2.0 (Firebase Realtime & PWA Offline)</p>
         </div>
       </div>
 

@@ -158,6 +158,31 @@ export interface GoogleDriveSyncState {
   downloadFromDrive: () => Promise<boolean>;
 }
 
+// Firebase Auth & Cloud Firestore Sync Types
+export interface FirebaseUserProfile {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+export interface FirebaseAuthSyncState {
+  user: FirebaseUserProfile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  isSyncing: boolean;
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  loginWithGoogle: () => Promise<void>;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name?: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
+  syncNow: () => Promise<boolean>;
+  forceUpload: () => Promise<boolean>;
+  forceDownload: () => Promise<boolean>;
+}
+
 export interface BackupPayload {
   tasks: Task[];
   prompts: Prompt[];
@@ -253,6 +278,8 @@ export interface AppContextType {
   ppctCtrl: StorageController<PPCTPlan>;
   departmentCtrl: StorageController<DepartmentRecord>;
   gdrive: GoogleDriveSyncState;
+  firebaseAuth: FirebaseAuthSyncState;
+  openAuthModal: () => void;
   showAlert: (title: string, message: string) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   closeModal: () => void;
