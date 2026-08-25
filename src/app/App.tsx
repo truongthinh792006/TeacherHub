@@ -15,14 +15,11 @@ import {
   DownloadCloud,
   CalendarDays,
   Briefcase,
-  Cloud,
   RefreshCw,
   Flame,
-  User as UserIcon,
 } from 'lucide-react';
 import { AppProvider } from './AppContext';
 import { useStorageController } from '../hooks/useStorageController';
-import { useGoogleDriveSync } from '../hooks/useGoogleDriveSync';
 import { useFirebaseAuthSync } from '../hooks/useFirebaseAuthSync';
 import { localDateAfter, localDateString } from '../lib/date';
 import { Dashboard } from '../features/dashboard/Dashboard';
@@ -45,7 +42,6 @@ import {
   DocumentLink,
   FirebaseAuthSyncState,
   GlobalFocus,
-  GoogleDriveSyncState,
   JournalEntry,
   ModalConfig,
   PPCTPlan,
@@ -331,12 +327,6 @@ export default function App() {
     departmentCtrl.refresh();
   }, [tasksCtrl, promptsCtrl, docsCtrl, journalCtrl, studentsCtrl, ppctCtrl, departmentCtrl]);
 
-  // Google Drive Sync hook
-  const gdrive = useGoogleDriveSync({
-    onDataRestored: refreshAllControllers,
-    showAlert,
-  });
-
   // Firebase Auth & Cloud Firestore Sync hook
   const firebaseAuth = useFirebaseAuthSync({
     onDataRestored: refreshAllControllers,
@@ -363,7 +353,6 @@ export default function App() {
     studentsCtrl,
     ppctCtrl,
     departmentCtrl,
-    gdrive,
     firebaseAuth,
     openAuthModal,
     showAlert,
@@ -507,12 +496,6 @@ export default function App() {
                       alt={firebaseAuth.user.displayName || ''}
                       className="w-9 h-9 rounded-full border border-amber-300"
                     />
-                  ) : gdrive.isSignedIn && gdrive.userProfile?.picture ? (
-                    <img
-                      src={gdrive.userProfile.picture}
-                      alt={gdrive.userProfile.name}
-                      className="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-600"
-                    />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold text-sm">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user ? (
@@ -526,15 +509,11 @@ export default function App() {
                     <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user
                         ? firebaseAuth.user.displayName
-                        : gdrive.isSignedIn && gdrive.userProfile
-                        ? gdrive.userProfile.name
                         : 'Local User'}
                     </p>
                     <p className="text-[10px] text-slate-400 truncate">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user
                         ? firebaseAuth.user.email
-                        : gdrive.isSignedIn && gdrive.userProfile
-                        ? gdrive.userProfile.email
                         : 'Lưu trữ cục bộ'}
                     </p>
                   </div>

@@ -9,18 +9,13 @@ import {
   FileCheck,
   X,
   History,
-  Cloud,
   CheckCircle2,
   CloudUpload,
   CloudDownload,
-  Key,
   LogIn,
   LogOut,
   RefreshCw,
-  Sparkles,
   Flame,
-  ShieldCheck,
-  User,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import { localDateString } from '../../lib/date';
@@ -37,13 +32,11 @@ export function SettingsPage() {
     studentsCtrl,
     ppctCtrl,
     departmentCtrl,
-    gdrive,
     firebaseAuth,
     openAuthModal,
     showAlert,
     showConfirm,
     glassClass,
-    inputClass,
     btnPrimary,
     btnSecondary,
     darkMode,
@@ -55,10 +48,6 @@ export function SettingsPage() {
   const [snapshotInfo, setSnapshotInfo] = useState<SafetySnapshotInfo | null>(() =>
     StorageService.getSafetySnapshotInfo(),
   );
-
-  // Google Drive Client ID editing state
-  const [editingClientId, setEditingClientId] = useState(false);
-  const [customClientId, setCustomClientId] = useState(gdrive.clientId);
 
   const refreshSnapshotInfo = () => {
     setSnapshotInfo(StorageService.getSafetySnapshotInfo());
@@ -230,12 +219,6 @@ export function SettingsPage() {
     );
   };
 
-  const handleSaveClientId = () => {
-    gdrive.setClientId(customClientId);
-    setEditingClientId(false);
-    showAlert('Đã lưu cấu hình', 'Đã cập nhật Google Client ID.');
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">Cài đặt</h1>
@@ -363,162 +346,10 @@ export function SettingsPage() {
           )}
         </div>
 
-        {/* 2. Đồng bộ Google Drive */}
-        <div className="pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <Cloud className="text-blue-500" size={20} /> Sao lưu Google Drive (File JSON)
-              </h3>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Sao lưu tệp tin dữ liệu định kỳ vào Google Drive cá nhân của bạn.
-              </p>
-            </div>
-            {gdrive.isSignedIn ? (
-              <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
-                <CheckCircle2 size={14} /> Đã kết nối
-              </span>
-            ) : (
-              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                Chưa kết nối
-              </span>
-            )}
-          </div>
-
-          {/* User Profile Card */}
-          {gdrive.isSignedIn && gdrive.userProfile ? (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {gdrive.userProfile.picture ? (
-                  <img
-                    src={gdrive.userProfile.picture}
-                    alt={gdrive.userProfile.name}
-                    className="w-11 h-11 rounded-full border-2 border-white shadow-sm"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-lg">
-                    {gdrive.userProfile.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-white">
-                    {gdrive.userProfile.name}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{gdrive.userProfile.email}</p>
-                  {gdrive.lastSyncedAt && (
-                    <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">
-                      Đồng bộ gần nhất: {new Date(gdrive.lastSyncedAt).toLocaleString('vi-VN')}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => gdrive.syncNow()}
-                  disabled={gdrive.isSyncing}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm transition-all disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={gdrive.isSyncing ? 'animate-spin' : ''} />
-                  <span>{gdrive.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}</span>
-                </button>
-                <button
-                  onClick={() => gdrive.logout()}
-                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors min-h-[38px]"
-                  title="Đăng xuất khỏi Google Drive"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Lưu trữ backup vào Google Drive cá nhân
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Dữ liệu được lưu trữ dưới dạng file JSON riêng tư trên Google Drive của bạn.
-                </p>
-              </div>
-              <button
-                onClick={() => gdrive.login()}
-                disabled={gdrive.isSyncing}
-                className="px-4 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-600 hover:bg-slate-100 flex items-center justify-center gap-2 shadow-sm transition-all min-h-[40px]"
-              >
-                <LogIn size={16} className="text-blue-500" />
-                <span>{gdrive.isSyncing ? 'Đang kết nối...' : 'Kết nối Google Drive'}</span>
-              </button>
-            </div>
-          )}
-
-          {/* Force Actions when signed in */}
-          {gdrive.isSignedIn && (
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                onClick={() => gdrive.uploadToDrive()}
-                disabled={gdrive.isSyncing}
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <CloudUpload size={14} className="text-blue-500" /> Tải lên Drive (Upload)
-              </button>
-              <button
-                onClick={() => gdrive.downloadFromDrive()}
-                disabled={gdrive.isSyncing}
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <CloudDownload size={14} className="text-emerald-500" /> Tải về Máy (Download)
-              </button>
-            </div>
-          )}
-
-          {/* Client ID Setting Toggle */}
-          <div className="pt-2">
-            <button
-              onClick={() => setEditingClientId(!editingClientId)}
-              className="text-[11px] text-slate-400 hover:text-blue-500 flex items-center gap-1 transition-colors"
-            >
-              <Key size={12} /> {editingClientId ? 'Ẩn cấu hình Client ID' : 'Tùy chỉnh Google Client ID cá nhân'}
-            </button>
-
-            {editingClientId && (
-              <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
-                  Google OAuth Client ID:
-                </label>
-                <input
-                  type="text"
-                  value={customClientId}
-                  onChange={(e) => setCustomClientId(e.target.value)}
-                  placeholder="382914838421-...apps.googleusercontent.com"
-                  className={inputClass}
-                />
-                <div className="flex justify-end gap-2 pt-1">
-                  <button
-                    onClick={() => {
-                      setCustomClientId(gdrive.clientId);
-                      setEditingClientId(false);
-                    }}
-                    className={btnSecondary}
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleSaveClientId}
-                    className={btnPrimary}
-                  >
-                    Lưu Client ID
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 3. Sao lưu dữ liệu Local */}
+        {/* 2. Sao lưu dữ liệu Cục bộ (Local JSON & Safety Snapshot) */}
         <div className="pb-6 border-b border-slate-200 dark:border-slate-700">
           <h3 className="font-bold text-slate-800 dark:text-white mb-1">
-            Sao lưu Dữ liệu Cục bộ (Local JSON)
+            Sao lưu & Phục hồi Cục bộ (Local JSON)
           </h3>
           <p className="text-sm text-slate-500 mb-4">
             Lưu trữ file backup offline đề phòng rủi ro mất dữ liệu trình duyệt.

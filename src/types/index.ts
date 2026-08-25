@@ -136,28 +136,6 @@ export type DepartmentRecord =
   | DepartmentMeetingRecord
   | TeacherAssignmentRecord;
 
-// Google Drive Sync Types
-export interface GoogleUserProfile {
-  name: string;
-  email: string;
-  picture?: string;
-}
-
-export interface GoogleDriveSyncState {
-  isSignedIn: boolean;
-  userProfile: GoogleUserProfile | null;
-  isSyncing: boolean;
-  lastSyncedAt: string | null;
-  syncError: string | null;
-  clientId: string;
-  setClientId: (clientId: string) => void;
-  login: () => Promise<void>;
-  logout: () => void;
-  syncNow: () => Promise<boolean>;
-  uploadToDrive: () => Promise<boolean>;
-  downloadFromDrive: () => Promise<boolean>;
-}
-
 // Firebase Auth & Cloud Firestore Sync Types
 export interface FirebaseUserProfile {
   uid: string;
@@ -277,7 +255,6 @@ export interface AppContextType {
   studentsCtrl: StorageController<Student>;
   ppctCtrl: StorageController<PPCTPlan>;
   departmentCtrl: StorageController<DepartmentRecord>;
-  gdrive: GoogleDriveSyncState;
   firebaseAuth: FirebaseAuthSyncState;
   openAuthModal: () => void;
   showAlert: (title: string, message: string) => void;
