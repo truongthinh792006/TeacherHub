@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Copy,
@@ -9,15 +9,21 @@ import {
   HelpCircle,
   Sparkles,
   FileText,
-  Layers,
-  ChevronRight,
-  ShieldCheck,
+  Clock,
+  Laptop,
+  Monitor,
+  CheckSquare,
+  Wand2,
   CheckCircle2,
+  Sliders,
+  RotateCcw,
+  SlidersHorizontal,
+  FileCode2,
 } from 'lucide-react';
 import { PPCTLesson, PPCTPlan } from '../../types';
 import { useAppContext } from '../../app/AppContext';
 
-export type AIGeneratorTab = 'khbd' | 'spec' | 'matrix' | 'quiz';
+export type AIGeneratorTab = 'matrix' | 'spec' | 'quiz' | 'khbd';
 
 interface LessonAIGeneratorModalProps {
   isOpen: boolean;
@@ -28,10 +34,10 @@ interface LessonAIGeneratorModalProps {
 }
 
 const competencyLabels: Record<string, string> = {
-  NLa: 'NLa: Sử dụng và quản lý các phương tiện công nghệ thông tin và truyền thông',
+  NLa: 'NLa: Sử dụng và quản lý các phương tiện CNTT và truyền thông',
   NLb: 'NLb: Ứng xử phù hợp trong môi trường số',
-  NLc: 'NLc: Giải quyết vấn đề với sự trợ giúp của công nghệ thông tin và truyền thông',
-  NLd: 'NLd: Ứng dụng công nghệ thông tin và truyền thông trong học và tự học',
+  NLc: 'NLc: Giải quyết vấn đề với sự trợ giúp của CNTT và truyền thông',
+  NLd: 'NLd: Ứng dụng CNTT và truyền thông trong học và tự học',
   NLe: 'NLe: Hợp tác trong môi trường số',
 };
 
@@ -40,19 +46,126 @@ export function LessonAIGeneratorModal({
   onClose,
   lesson,
   plan,
-  initialTab = 'khbd',
+  initialTab = 'matrix',
 }: LessonAIGeneratorModalProps) {
-  const { promptsCtrl, showAlert } = useAppContext();
-  const [activeTab, setActiveTab] = useState<AIGeneratorTab>(initialTab);
-  const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { promptsCtrl, showAlert, setActiveTab, setGlobalFocus } = useAppContext();
 
-  // Sync initial tab when modal re-opens
-  React.useEffect(() => {
-    if (isOpen && initialTab) {
-      setActiveTab(initialTab);
+  // Normalize active tab: 'spec' maps to 'matrix' with spec sub-output
+  const [activeTabState, setActiveTabState] = useState<'matrix' | 'quiz' | 'khbd'>('matrix');
+  const [matrixSubMode, setMatrixSubMode] = useState<'matrix' | 'spec'>('matrix');
+
+  // Sync initial tab when opening modal
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTab === 'spec') {
+        setActiveTabState('matrix');
+        setMatrixSubMode('spec');
+      } else if (initialTab === 'matrix') {
+        setActiveTabState('matrix');
+        setMatrixSubMode('matrix');
+      } else if (initialTab === 'quiz') {
+        setActiveTabState('quiz');
+      } else if (initialTab === 'khbd') {
+        setActiveTabState('khbd');
+      }
     }
   }, [isOpen, initialTab]);
+
+  // -------------------------------------------------------------
+  // CONTROLS FOR TAB 1: MA TRẬN & BẢN ĐẶC TẢ
+  // -------------------------------------------------------------
+  const [examDuration, setExamDuration] = useState<'15' | '45' | '60' | '90'>('45');
+  const [examTypeTitle, setExamTypeTitle] = useState('Kiểm tra Giữa học kỳ');
+  const [mcqCount, setMcqCount] = useState(16);
+  const [tfCount, setTfCount] = useState(4);
+  const [shortCount, setShortCount] = useState(4);
+
+  // Cognitive distribution (%)
+  const [cognitivePreset, setCognitivePreset] = useState<'cv7991' | 'basic' | 'advanced' | 'custom'>('cv7991');
+  const [nbPercent, setNbPercent] = useState(40);
+  const [thPercent, setThPercent] = useState(30);
+  const [vdPercent, setVdPercent] = useState(20);
+  const [vdcPercent, setVdcPercent] = useState(10);
+
+  const handleCognitivePresetChange = (preset: 'cv7991' | 'basic' | 'advanced' | 'custom') => {
+    setCognitivePreset(preset);
+    if (preset === 'cv7991') {
+      setNbPercent(40);
+      setThPercent(30);
+      setVdPercent(20);
+      setVdcPercent(10);
+    } else if (preset === 'basic') {
+      setNbPercent(50);
+      setThPercent(30);
+      setVdPercent(15);
+      setVdcPercent(5);
+    } else if (preset === 'advanced') {
+      setNbPercent(30);
+      setThPercent(30);
+      setVdPercent(25);
+      setVdcPercent(15);
+    }
+  };
+
+  const handleExamDurationChange = (dur: '15' | '45' | '60' | '90') => {
+    setExamDuration(dur);
+    if (dur === '15') {
+      setExamTypeTitle('Kiểm tra thường xuyên (15p)');
+      setMcqCount(8);
+      setTfCount(2);
+      setShortCount(2);
+    } else if (dur === '45') {
+      setExamTypeTitle('Kiểm tra Giữa học kỳ (45p)');
+      setMcqCount(16);
+      setTfCount(4);
+      setShortCount(4);
+    } else if (dur === '90') {
+      setExamTypeTitle('Kiểm tra Cuối học kỳ / Khảo sát (90p)');
+      setMcqCount(24);
+      setTfCount(6);
+      setShortCount(6);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // CONTROLS FOR TAB 2: ĐỀ TRẮC NGHIỆM TIN HỌC
+  // -------------------------------------------------------------
+  const [includePart1, setIncludePart1] = useState(true); // 4 lựa chọn
+  const [includePart2, setIncludePart2] = useState(true); // Đúng/Sai 4 ý
+  const [includePart3, setIncludePart3] = useState(true); // Trả lời ngắn
+  const [includeExplanations, setIncludeExplanations] = useState(true);
+  const [createVariants, setCreateVariants] = useState(false); // 2 mã đề hoán vị
+  const [targetCompetency, setTargetCompetency] = useState<string>('ALL');
+
+  // -------------------------------------------------------------
+  // CONTROLS FOR TAB 3: KẾ HOẠCH BÀI DẠY KHBD 5512
+  // -------------------------------------------------------------
+  const [lessonPeriods, setLessonPeriods] = useState<number>(lesson?.periods || 2);
+  const [environment, setEnvironment] = useState<'COMPUTER_LAB' | 'CLASSROOM'>('COMPUTER_LAB');
+  const [softwareTools, setSoftwareTools] = useState<string[]>([
+    'VS Code & Trình duyệt Web',
+    'Phần mềm mô phỏng / Thực hành',
+    'Slide bài giảng số & Phiếu học tập',
+  ]);
+  const [pedagogyDetailLevel, setPedagogyDetailLevel] = useState<'STANDARD' | 'DETAILED'>('DETAILED');
+
+  // Reset lesson periods when lesson changes
+  useEffect(() => {
+    if (lesson) {
+      setLessonPeriods(lesson.periods || 2);
+      setEnvironment(lesson.type === 'PRACTICE' ? 'COMPUTER_LAB' : 'CLASSROOM');
+    }
+  }, [lesson]);
+
+  const toggleSoftwareTool = (tool: string) => {
+    setSoftwareTools((prev) =>
+      prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool],
+    );
+  };
+
+  // Feedback states
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const trackTitle =
     plan.track === 'ICT'
@@ -92,180 +205,196 @@ export function LessonAIGeneratorModal({
       ? lesson.competencies.map((c) => competencyLabels[c] || c)
       : [competencyLabels.NLc, competencyLabels.NLd];
 
-  // 1. GENERATOR: KHBD 5512
-  const generateKHBD5512Prompt = () => {
-    if (!lesson) return '';
-    return `Đóng vai là Chuyên gia Sư phạm Tin học THPT & Giảng viên bồi dưỡng giáo viên môn Tin học theo chương trình GDPT 2018. Hãy soạn thảo một KẾ HOẠCH BÀI DẠY (GIÁO ÁN) hoàn chỉnh, chi tiết và chuẩn mực tuyệt đối theo đúng phụ lục Công văn 5512/BGDĐT-GDTrH cho bài học sau:
+  const totalPercent = nbPercent + thPercent + vdPercent + vdcPercent;
 
-THÔNG TIN BÀI DẠY:
+  // -------------------------------------------------------------
+  // PROMPT BUILDERS WITH LIVE PARAMS
+  // -------------------------------------------------------------
+
+  // 1. GENERATOR: MA TRẬN CV 7991 HOẶC BẢN ĐẶC TẢ
+  const generateMatrixOrSpecPrompt = () => {
+    if (!lesson) return '';
+
+    if (matrixSubMode === 'matrix') {
+      return `Đóng vai là Trưởng bộ môn Tin học THPT & Chuyên gia khảo thí bám sát Công văn số 7991/BGDĐT-GDTrH ngày 17/12/2024 của Bộ GD&ĐT. Hãy xây dựng KHUNG MA TRẬN ĐỀ KIỂM TRA ĐỊNH KỲ cho chủ đề chứa bài học sau:
+
+THÔNG TIN ĐỀ KIỂM TRA:
 - Môn học: Tin học Lớp ${plan.grade} (${trackTitle})
-- Bộ sách: Cánh Diều / Kết nối tri thức với cuộc sống
-- Tên bài dạy: ${lesson.lessonName}
+- Hình thức: ${examTypeTitle}
+- Thời gian làm bài: ${examDuration} phút
+- Đơn vị bài học trọng tâm: ${lesson.lessonName} (Tuần ${lesson.week} • Tiết ${lesson.order})
+- Chủ đề lớn: ${lesson.topic}
+
+CẤU TRÚC ĐỀ THEO TÙY CHỈNH:
+- Số câu trắc nghiệm Nhiều lựa chọn (Phần I): ${mcqCount} câu (mỗi câu 0.25đ = ${(mcqCount * 0.25).toFixed(2)}đ)
+- Số câu trắc nghiệm Đúng/Sai (Phần II): ${tfCount} câu (mỗi câu 4 ý a,b,c,d, tối đa 1.0đ/câu = ${(tfCount * 1.0).toFixed(2)}đ)
+- Số câu trắc nghiệm Trả lời ngắn (Phần III): ${shortCount} câu (mỗi câu 0.25đ hoặc 0.5đ)
+
+TỶ LỆ PHÂN BỐ MỨC ĐỘ NHẬN THỨC THEO CHUẨN:
+- Nhận biết (Biết): ${nbPercent}%
+- Thông hiểu (Hiểu): ${thPercent}%
+- Vận dụng (VD): ${vdPercent}%
+- Vận dụng cao (VDC): ${vdcPercent}%
+(Tổng tỷ lệ nhận thức: ${totalPercent}%)
+
+YÊU CẦU ĐẦU RA:
+1. Xuất Khung Bảng Ma trận Markdown chuẩn theo đúng biểu mẫu Phụ lục Công văn 7991/BGDĐT-GDTrH.
+2. Bảng phân bố rõ ràng: Cột Mức độ nhận thức (Biết, Hiểu, Vận dụng, Vận dụng cao) cho từng phần thi (Phần I, II, III).
+3. Đảm bảo tổng số điểm thang 10.0 và thời gian làm bài ${examDuration} phút hợp lý.`;
+    } else {
+      return `Đóng vai là Chuyên gia Khảo thí và Đánh giá chất lượng giáo dục môn Tin học THPT. Hãy xây dựng BẢN ĐẶC TẢ ĐỀ KIỂM TRA ĐÁNH GIÁ theo định dạng chuẩn Bộ GD&ĐT cho bài học sau:
+
+THÔNG TIN BÀI HỌC & ĐỀ KIỂM TRA:
+- Môn học: Tin học Lớp ${plan.grade} (${trackTitle})
+- Đơn vị bài học: ${lesson.lessonName} (Tuần ${lesson.week})
 - Thuộc chủ đề: ${lesson.topic}
-- Thời lượng: ${lesson.periods} tiết (${lesson.periods * 45} phút)
-- Hình thức: ${lesson.type === 'PRACTICE' ? 'Thực hành phòng máy tính' : lesson.type === 'PROJECT' ? 'Dự án học tập' : 'Lý thuyết kết hợp thực hành'}
-${lesson.notes ? `- Ghi chú đặc thù: ${lesson.notes}` : ''}
+- Thời lượng bài kiểm tra: ${examDuration} phút (${examTypeTitle})
 
-I. MỤC TIÊU DẠY HỌC:
-1. Về năng lực:
-a) Năng lực Tin học đặc thù:
-${competenciesList.map((c) => `  - ${c}`).join('\n')}
-b) Yêu cầu cần đạt chi tiết theo 3 mức độ nhận thức:
-  * Nhận biết (Biết):
-${knowList.map((k) => `    + ${k}`).join('\n')}
-  * Thông hiểu (Hiểu):
-${understandList.map((u) => `    + ${u}`).join('\n')}
-  * Vận dụng (Vận dụng & Vận dụng cao):
-${applyList.map((a) => `    + ${a}`).join('\n')}
-c) Năng lực chung:
-  - Năng lực tự chủ và tự học: Chủ động đọc SGK, tìm hiểu tài liệu và thực hiện các nhiệm vụ cá nhân.
-  - Năng lực giao tiếp và hợp tác: Tương tác nhóm tích cực, phân công nhiệm vụ và phản biện xây dựng.
-  - Năng lực giải quyết vấn đề và sáng tạo: Đề xuất giải pháp và xử lý tình huống phát sinh trong bài học.
+THÔNG SỐ PHÂN BỐ CÂU HỎI:
+- Phần I (Nhiều lựa chọn): ${mcqCount} câu
+- Phần II (Đúng/Sai 4 ý): ${tfCount} câu
+- Phần III (Trả lời ngắn): ${shortCount} câu
+- Tỷ lệ nhận thức: ${nbPercent}% Biết - ${thPercent}% Hiểu - ${vdPercent}% Vận dụng - ${vdcPercent}% Vận dụng cao.
 
-2. Về phẩm chất:
-  - Chăm chỉ: Tích cực hoàn thành các bài tập, nhiệm vụ được giao trên lớp và ở nhà.
-  - Trung thực: Tôn trọng bản quyền tác giả, tính chính xác của dữ liệu và kết quả học tập.
-  - Trách nhiệm: Giữ gìn thiết bị phòng máy, tuân thủ an toàn mạng và văn hóa ứng xử số.
-
-II. THIẾT BỊ DẠY HỌC VÀ HỌC LIỆU:
-1. Giáo viên:
-  - Máy tính giáo viên kết nối máy chiếu / Tivi thông minh, phòng máy tính kết nối mạng Internet.
-  - Bài giảng điện tử trình chiếu sinh động, phiếu học tập số 1, 2, hệ thống bài tập trắc nghiệm trực tuyến.
-2. Học sinh:
-  - Sách giáo khoa Tin học ${plan.grade}, vở ghi chép, máy tính thực hành.
-
-III. TIẾN TRÌNH DẠY HỌC (Chuỗi 4 hoạt động sư phạm theo CV 5512):
-Hãy xây dựng chi tiết đầy đủ 4 hoạt động sau. Mỗi hoạt động PHẢI có đủ 4 mục: a) Mục tiêu, b) Nội dung, c) Sản phẩm, d) Tổ chức thực hiện (gồm 4 bước chuẩn: Chuyển giao nhiệm vụ -> Thực hiện nhiệm vụ -> Báo cáo, thảo luận -> Kết luận, nhận định).
-
-- HOẠT ĐỘNG 1: KHỞI ĐỘNG (Xác định vấn đề / nhiệm vụ học tập - 5 đến 7 phút)
-  + Tạo tình huống có vấn đề kích thích tò mò, liên hệ từ bài cũ hoặc đời sống thực tế vào bài mới.
-- HOẠT ĐỘNG 2: HÌNH THÀNH KIẾN THỨC MỚI (Khám phá nội dung - 20 đến 25 phút)
-  + Chia thành các đơn vị kiến thức/nhiệm vụ rõ ràng.
-  + Thiết kế hệ thống câu hỏi gợi mở, hoạt động cá nhân và hoạt động nhóm phù hợp.
-- HOẠT ĐỘNG 3: LUYỆN TẬP (Củng cố và rèn luyện kỹ năng - 10 đến 12 phút)
-  + Hệ thống câu hỏi trắc nghiệm nhanh và bài tập áp dụng trực tiếp kiến thức vừa học.
-- HOẠT ĐỘNG 4: VẬN DỤNG (Mở rộng và ứng dụng vào thực tế - 3 đến 5 phút)
-  + Giao nhiệm vụ thực tế mang tính mở rộng cho học sinh tìm hiểu thêm ở nhà.
-
-IV. PHỤ LỤC HỒ SƠ DẠY HỌC:
-- Cung cấp nội dung chi tiết Phiếu học tập số 1, Phiếu học tập số 2.
-- Cung cấp Bảng tiêu chí đánh giá (Rubric) chi tiết cho sản phẩm học tập của học sinh.`;
-  };
-
-  // 2. GENERATOR: BẢN ĐẶC TẢ ĐỀ KIỂM TRA
-  const generateSpecPrompt = () => {
-    if (!lesson) return '';
-    return `Đóng vai là Chuyên gia Khảo thí và Đánh giá chất lượng giáo dục môn Tin học THPT. Hãy xây dựng BẢN ĐẶC TẢ ĐỀ KIỂM TRA ĐÁNH GIÁ theo định dạng mới chuẩn Bộ Giáo dục & Đào tạo cho bài học sau:
-
-THÔNG TIN BÀI HỌC:
-- Môn học: Tin học Lớp ${plan.grade} (${trackTitle})
-- Đơn vị bài học: ${lesson.lessonName}
-- Chủ đề: ${lesson.topic}
-- Thời lượng: ${lesson.periods} tiết
-
-CẤU TRÚC ĐẶC TẢ YÊU CẦU:
-1. Xuất BẢNG ĐẶC TẢ MARKDOWN chuẩn theo các cột:
-   - TT
-   - Đơn vị kiến thức / Kĩ năng
-   - Mức độ đánh giá (Nhận biết / Thông hiểu / Vận dụng / Vận dụng cao)
-   - Yêu cầu cần đạt chi tiết (YCCĐ)
-   - Mã năng lực Tin học gắn kèm (NLa, NLb, NLc, NLd, NLe)
-   - Số câu hỏi theo từng dạng thức:
-     + Phần I (Trắc nghiệm nhiều lựa chọn - 4 chọn 1)
-     + Phần II (Trắc nghiệm Đúng/Sai - 4 ý a, b, c, d)
-     + Phần III (Trắc nghiệm Trả lời ngắn / Output mã nguồn)
-
-2. NỘI DUNG ÁNH XẠ CỤ THỂ CHO BÀI HỌC:
+NỘI DUNG ÁNH XẠ YÊU CẦU CẦN ĐẠT (YCCĐ):
 - Mức độ Nhận biết:
 ${knowList.map((k) => `  * ${k}`).join('\n')}
 - Mức độ Thông hiểu:
 ${understandList.map((u) => `  * ${u}`).join('\n')}
-- Mức độ Vận dụng & Vận dụng cao:
+- Mức độ Vận dụng & VDC:
 ${applyList.map((a) => `  * ${a}`).join('\n')}
 
-3. BẢNG PHÂN BỐ CÂU HỎI VÀ ĐIỂM SỐ DỰ KIẾN:
-- Cung cấp bảng tổng hợp số câu và tỷ lệ % điểm theo từng mức độ nhận thức cho bài học này.`;
+YÊU CẦU ĐẦU RA:
+Xuất BẢNG ĐẶC TẢ MARKDOWN đầy đủ các cột chuẩn của Bộ GD&ĐT:
+| TT | Đơn vị kiến thức | Mức độ đánh giá | Yêu cầu cần đạt | Mã năng lực (NLa-NLe) | Số câu hỏi Phần I | Số câu hỏi Phần II | Số câu hỏi Phần III |`;
+    }
   };
 
-  // 3. GENERATOR: MA TRẬN CV 7991
-  const generateMatrixPrompt = () => {
-    if (!lesson) return '';
-    return `Đóng vai là Trưởng bộ môn Tin học THPT. Hãy xây dựng MA TRẬN ĐỀ KIỂM TRA ĐỊNH KỲ chuẩn theo Phụ lục Công văn số 7991/BGDĐT-GDTrH ngày 17/12/2024 của Bộ GD&ĐT cho chủ đề có bài học sau:
-
-THÔNG TIN CHỦ ĐỀ & BÀI HỌC:
-- Môn học: Tin học Lớp ${plan.grade} (${trackTitle})
-- Bài học trọng tâm: ${lesson.lessonName} (Tuần ${lesson.week} • Tiết ${lesson.order})
-- Chủ đề lớn: ${lesson.topic}
-
-QUY ĐỊNH MA TRẬN THEO CV 7991:
-1. Tỷ lệ phân bố mức độ nhận thức:
-   - Nhận biết: ~40% (4.0 điểm)
-   - Thông hiểu: ~30% (3.0 điểm)
-   - Vận dụng: ~20% (2.0 điểm)
-   - Vận dụng cao: ~10% (1.0 điểm)
-
-2. Cấu trúc 3 dạng thức trắc nghiệm mới:
-   - Phần I: Câu hỏi trắc nghiệm nhiều lựa chọn (Mỗi câu đúng 0.25 điểm)
-   - Phần II: Câu hỏi trắc nghiệm Đúng/Sai (Mỗi câu gồm 4 ý a, b, c, d; Đúng 1 ý: 0.1đ; 2 ý: 0.25đ; 3 ý: 0.5đ; 4 ý: 1.0đ)
-   - Phần III: Câu hỏi trắc nghiệm Trả lời ngắn (Mỗi câu đúng 0.25đ hoặc 0.5đ)
-
-3. YÊU CẦU ĐẦU RA:
-- Xuất Khung Bảng Ma trận Markdown chuẩn theo đúng biểu mẫu phụ lục CV 7991/BGDĐT-GDTrH.
-- Liệt kê rõ số câu cho từng dạng thức ở 4 mức độ: Biết, Hiểu, Vận dụng, Vận dụng cao.
-- Tính toán tổng số câu, tổng số điểm (thang điểm 10.0) và tỷ lệ % hoàn toàn chính xác.
-- Kèm bản hướng dẫn phân chia thời gian làm bài phù hợp (45 phút hoặc 90 phút).`;
-  };
-
-  // 4. GENERATOR: ĐỀ TRẮC NGHIỆM 3 DẠNG THỨC
+  // 2. GENERATOR: ĐỀ TRẮC NGHIỆM TIN HỌC (QUIZ)
   const generateQuizPrompt = () => {
     if (!lesson) return '';
-    return `Đóng vai là Chuyên gia ra đề thi môn Tin học THPT theo định dạng kỳ thi Tốt nghiệp THPT mới từ năm 2025 của Bộ GD&ĐT. Hãy biên soạn một BỘ ĐỀ TRẮC NGHIỆM 3 DẠNG THỨC bám sát yêu cầu cần đạt của bài học sau:
+
+    const partsText: string[] = [];
+    if (includePart1) {
+      partsText.push(`- PHẦN I (Trắc nghiệm Nhiều lựa chọn): Tạo ${mcqCount > 0 ? mcqCount : 4} câu hỏi 4 phương án A, B, C, D (chỉ 1 phương án đúng), tập trung vào mức độ Nhận biết và Thông hiểu.`);
+    }
+    if (includePart2) {
+      partsText.push(`- PHẦN II (Trắc nghiệm Đúng/Sai): Tạo ${tfCount > 0 ? tfCount : 2} câu hỏi. Mỗi câu đưa ra một ngữ cảnh thực tiễn hoặc đoạn mã nguồn/cấu hình, kèm 4 ý a), b), c), d) yêu cầu thí sinh xác định Đúng hay Sai theo chuẩn định dạng Tốt nghiệp THPT.`);
+    }
+    if (includePart3) {
+      partsText.push(`- PHẦN III (Trắc nghiệm Trả lời ngắn): Tạo ${shortCount > 0 ? shortCount : 2} câu hỏi yêu cầu học sinh phân tích, suy luận và điền kết quả (output lệnh, giá trị số hoặc từ khóa kỹ thuật ngắn gọn).`);
+    }
+
+    const compTarget =
+      targetCompetency !== 'ALL'
+        ? `TẬP TRUNG ĐẶC BIỆT VÀO MÃ NĂNG LỰC: ${competencyLabels[targetCompetency] || targetCompetency}`
+        : `BAO QUÁT CÁC MÃ NĂNG LỰC BÀI HỌC: ${lesson.competencies?.join(', ') || 'NLa, NLc, NLd'}`;
+
+    return `Đóng vai là Chuyên gia ra đề thi môn Tin học THPT theo định dạng kỳ thi Tốt nghiệp THPT mới từ năm 2025 của Bộ Giáo dục & Đào tạo. Hãy biên soạn một BỘ ĐỀ TRẮC NGHIỆM ĐÁNH GIÁ NĂNG LỰC cho bài học sau:
 
 THÔNG TIN BÀI HỌC:
 - Môn: Tin học Lớp ${plan.grade} (${trackTitle})
 - Tên bài học: ${lesson.lessonName}
 - Chủ đề: ${lesson.topic}
+- ${compTarget}
 
-YÊU CẦU CẦN ĐẠT CỦA BÀI HỌC CẦN PHỦ KÍN:
-* Biết: ${knowList.join('; ')}
-* Hiểu: ${understandList.join('; ')}
+YÊU CẦU CẦN ĐẠT CỦA BÀI HỌC:
+* Nhận biết: ${knowList.join('; ')}
+* Thông hiểu: ${understandList.join('; ')}
 * Vận dụng: ${applyList.join('; ')}
 
-CẤU TRÚC BỘ CÂU HỎI BẮT BUỘC:
+CẤU TRÚC ĐỀ THEO LỰA CHỌN CỦA GIÁO VIÊN:
+${partsText.join('\n')}
 
-PHẦN I: CÂU TRẮC NGHIỆM NHIỀU LỰA CHỌN (4 đến 6 câu)
-- Thí sinh trả lời từ câu 1 đến câu n. Mỗi câu hỏi chỉ chọn MỘT phương án chính xác nhất trong 4 phương án A, B, C, D.
-- Các câu hỏi bao quát mức độ Nhận biết và Thông hiểu lý thuyết cốt lõi của bài học.
+${createVariants ? '- YÊU CẦU TẠO 2 PHIÊN BẢN HOÁN VỊ: Tạo 2 mã đề thi tương đương (Mã đề 101 và Mã đề 102) để tổ chức kiểm tra công bằng trong phòng máy.' : ''}
 
-PHẦN II: CÂU TRẮC NGHIỆM ĐÚNG/SAI (2 câu)
-- Thí sinh trả lời câu 1 và câu 2. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn ĐÚNG hoặc SAI.
-- Mỗi câu hỏi phải có một ngữ cảnh thực tiễn hoặc một đoạn mã nguồn/cấu hình liên quan trực tiếp đến bài học.
-- 4 ý a, b, c, d phải phân hóa từ Nhận biết, Thông hiểu đến Vận dụng tình huống.
+${includeExplanations ? `ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM:
+- Cung cấp Bảng đáp án Phần I.
+- Cung cấp Bảng đáp án Phần II (Ghi rõ từng ý a, b, c, d là Đúng hay Sai kèm phần giải thích ngắn gọn).
+- Cung cấp Đáp án và lời giải chi tiết cho Phần III.` : 'Không cần kèm lời giải chi tiết (chỉ cung cấp bảng đáp án nhanh).'}
+`;
+  };
 
-PHẦN III: CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN (2 đến 3 câu)
-- Thí sinh trả lời bằng cách điền từ khóa, số liệu, giá trị output hoặc tên thẻ/lệnh ngắn gọn.
-- Yêu cầu tư duy logic, tính toán hoặc phân tích kết quả đoạn mã.
+  // 3. GENERATOR: KẾ HOẠCH BÀI DẠY KHBD 5512
+  const generateKHBDPrompt = () => {
+    if (!lesson) return '';
 
-ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM:
-- Cung cấp Bảng đáp án Phần I (Ví dụ: 1-A, 2-C...).
-- Cung cấp Bảng đáp án Phần II (Ví dụ: Câu 1: a-Đ, b-S, c-Đ, d-S kèm giải thích chi tiết vì sao đúng/sai).
-- Cung cấp Đáp án Phần III kèm lời giải chi tiết từng bước.`;
+    const envText =
+      environment === 'COMPUTER_LAB'
+        ? 'Phòng thực hành máy tính có kết nối mạng Internet (học sinh thao tác trực tiếp trên máy tính cá nhân)'
+        : 'Phòng học lý thuyết trang bị Máy chiếu / Tivi thông minh và bảng tương tác';
+
+    return `Đóng vai là Chuyên gia Sư phạm Tin học THPT & Giảng viên bồi dưỡng giáo viên theo chương trình GDPT 2018. Hãy soạn thảo một KẾ HOẠCH BÀI DẠY (GIÁO ÁN) hoàn chỉnh, chuẩn mực tuyệt đối theo đúng phụ lục Công văn 5512/BGDĐT-GDTrH cho bài học sau:
+
+THÔNG TIN BÀI DẠY:
+- Môn học: Tin học Lớp ${plan.grade} (${trackTitle})
+- Tên bài dạy: ${lesson.lessonName}
+- Thuộc chủ đề: ${lesson.topic}
+- Thời lượng giảng dạy: ${lessonPeriods} tiết (${lessonPeriods * 45} phút)
+- Môi trường & Cơ sở vật chất: ${envText}
+- Phần mềm & Học liệu số sử dụng: ${softwareTools.join(', ')}
+
+I. MỤC TIÊU DẠY HỌC:
+1. Năng lực Tin học đặc thù:
+${competenciesList.map((c) => `  - ${c}`).join('\n')}
+
+2. Yêu cầu cần đạt chi tiết theo 3 mức độ:
+  * Nhận biết: ${knowList.join('; ')}
+  * Thông hiểu: ${understandList.join('; ')}
+  * Vận dụng & VDC: ${applyList.join('; ')}
+
+3. Phẩm chất: Chăm chỉ, Trung thực, Trách nhiệm trong môi trường số.
+
+II. TIẾN TRÌNH DẠY HỌC (Chuỗi 4 hoạt động sư phạm theo CV 5512):
+Xây dựng chi tiết chuỗi 4 hoạt động theo cấp độ: ${pedagogyDetailLevel === 'DETAILED' ? 'Chi tiết nâng cao có phương án phân hóa học sinh nhanh/chậm và hướng dẫn khắc phục lỗi thường gặp' : 'Chuẩn 4 bước chuẩn mực theo CV 5512'}.
+Mỗi hoạt động phải có đủ 4 mục: a) Mục tiêu, b) Nội dung, c) Sản phẩm dự kiến, d) Tổ chức thực hiện (Chuyển giao nhiệm vụ -> Thực hiện nhiệm vụ -> Báo cáo, thảo luận -> Kết luận, nhận định).
+
+- HOẠT ĐỘNG 1: KHỞI ĐỘNG (Xác định vấn đề / Tình huống có vấn đề khơi gợi hứng thú)
+- HOẠT ĐỘNG 2: HÌNH THÀNH KIẾN THỨC MỚI (Khám phá nội dung trọng tâm bài học)
+- HOẠT ĐỘNG 3: LUYỆN TẬP (Củng cố, thực hành trên máy hoặc bài tập phân hóa)
+- HOẠT ĐỘNG 4: VẬN DỤNG (Mở rộng thực tiễn, định hướng phát triển năng lực tự học)
+
+III. HỒ SƠ DẠY HỌC ĐÍNH KÈM:
+- Thiết kế nội dung chi tiết Phiếu học tập số 1 và số 2.
+- Bảng tiêu chí đánh giá sản phẩm (Rubric) dành cho giáo viên và học sinh tự đánh giá.`;
   };
 
   const currentPrompt = useMemo(() => {
-    switch (activeTab) {
-      case 'khbd':
-        return generateKHBD5512Prompt();
-      case 'spec':
-        return generateSpecPrompt();
+    switch (activeTabState) {
       case 'matrix':
-        return generateMatrixPrompt();
+        return generateMatrixOrSpecPrompt();
       case 'quiz':
         return generateQuizPrompt();
+      case 'khbd':
+        return generateKHBDPrompt();
       default:
         return '';
     }
-  }, [activeTab, lesson, plan]);
+  }, [
+    activeTabState,
+    matrixSubMode,
+    examDuration,
+    examTypeTitle,
+    mcqCount,
+    tfCount,
+    shortCount,
+    nbPercent,
+    thPercent,
+    vdPercent,
+    vdcPercent,
+    includePart1,
+    includePart2,
+    includePart3,
+    includeExplanations,
+    createVariants,
+    targetCompetency,
+    lessonPeriods,
+    environment,
+    softwareTools,
+    pedagogyDetailLevel,
+    lesson,
+    plan,
+  ]);
 
   if (!isOpen || !lesson) return null;
 
@@ -277,25 +406,23 @@ PHẦN III: CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN (2 đến 3 câu)
   };
 
   const handleSaveToPromptLibrary = () => {
-    const tabTitles: Record<AIGeneratorTab, string> = {
-      khbd: 'Kế hoạch bài dạy 5512',
-      spec: 'Bản đặc tả đề kiểm tra',
-      matrix: 'Ma trận đề CV 7991',
+    const tabTitles = {
+      matrix: matrixSubMode === 'matrix' ? 'Ma trận đề CV 7991' : 'Bản đặc tả đề kiểm tra',
       quiz: 'Đề trắc nghiệm 3 dạng thức',
+      khbd: 'Kế hoạch bài dạy 5512',
     };
 
-    const tabCategories: Record<AIGeneratorTab, string> = {
-      khbd: 'Giáo án 5512',
-      spec: 'Đặc tả đề',
-      matrix: 'Ma trận đề',
+    const tabCategories = {
+      matrix: matrixSubMode === 'matrix' ? 'Ma trận đề' : 'Đặc tả đề',
       quiz: 'Đề kiểm tra',
+      khbd: 'Giáo án 5512',
     };
 
     promptsCtrl.addItem({
-      title: `${tabTitles[activeTab]} - ${lesson.lessonName}`,
+      title: `${tabTitles[activeTabState]} - ${lesson.lessonName}`,
       content: currentPrompt,
-      description: `Prompt tự động sinh cho Tin học ${plan.grade} (Tuần ${lesson.week}): ${lesson.lessonName}`,
-      category: tabCategories[activeTab],
+      description: `Prompt AI cho bài Tin học ${plan.grade} (Tuần ${lesson.week}): ${lesson.lessonName}`,
+      category: tabCategories[activeTabState],
       tags: `tin-hoc-${plan.grade}, ppct, tuan-${lesson.week}, gdpt-2018`,
       favorite: true,
     });
@@ -303,41 +430,22 @@ PHẦN III: CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN (2 đến 3 câu)
     setSaved(true);
     showAlert(
       'Đã lưu vào Thư viện',
-      `Đã lưu cấu trúc Prompt "${tabTitles[activeTab]}" của bài học vào Thư viện Prompt AI!`,
+      `Đã lưu cấu trúc Prompt "${tabTitles[activeTabState]}" vào Thư viện Prompt AI!`,
     );
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const tabs = [
-    {
-      id: 'khbd' as AIGeneratorTab,
-      label: 'KHBD 5512',
-      fullLabel: 'Kế hoạch Bài dạy 5512',
-      icon: BookOpenCheck,
-      desc: 'Giáo án 4 hoạt động chuẩn CV 5512',
-    },
-    {
-      id: 'spec' as AIGeneratorTab,
-      label: 'Bản đặc tả',
-      fullLabel: 'Bản đặc tả đề kiểm tra',
-      icon: FileText,
-      desc: 'Đặc tả 3 dạng thức kèm mã năng lực',
-    },
-    {
-      id: 'matrix' as AIGeneratorTab,
-      label: 'Ma trận CV 7991',
-      fullLabel: 'Ma trận đề chuẩn CV 7991',
-      icon: Table,
-      desc: 'Ma trận câu hỏi chuẩn ngày 17/12/2024',
-    },
-    {
-      id: 'quiz' as AIGeneratorTab,
-      label: 'Đề trắc nghiệm',
-      fullLabel: 'Đề trắc nghiệm 3 dạng thức',
-      icon: HelpCircle,
-      desc: 'Bộ đề thi 3 dạng thức kèm đáp án',
-    },
-  ];
+  // Open in Full AI Studio
+  const handleOpenInFullAIStudio = () => {
+    let targetSubTool = 'exam-matrix';
+    if (activeTabState === 'khbd') targetSubTool = 'lesson-plan';
+    else if (activeTabState === 'quiz') targetSubTool = 'quiz-builder';
+    else if (activeTabState === 'matrix') targetSubTool = 'exam-matrix';
+
+    setGlobalFocus({ id: targetSubTool, action: 'view' });
+    setActiveTab('ai-tools');
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
@@ -374,57 +482,427 @@ PHẦN III: CÂU TRẮC NGHIỆM TRẢ LỜI NGẮN (2 đến 3 câu)
           </button>
         </div>
 
-        {/* 4 Tool Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-2 bg-slate-100 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`p-2.5 sm:p-3 rounded-xl flex flex-col items-center sm:items-start text-center sm:text-left transition-all ${
-                  isActive
-                    ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-800'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-900/50'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Icon size={16} />
-                  <span className="text-xs font-bold">{tab.label}</span>
-                </div>
-                <span className="text-[10px] text-slate-400 hidden sm:block truncate w-full">
-                  {tab.desc}
-                </span>
-              </button>
-            );
-          })}
+        {/* 3 Main Tool Tabs */}
+        <div className="grid grid-cols-3 gap-1 p-2 bg-slate-100 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800">
+          <button
+            onClick={() => setActiveTabState('matrix')}
+            className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+              activeTabState === 'matrix'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <Table size={16} />
+            <span>Ma trận & Bản đặc tả</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTabState('quiz')}
+            className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+              activeTabState === 'quiz'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <HelpCircle size={16} />
+            <span>Đề trắc nghiệm Tin học</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTabState('khbd')}
+            className={`p-2.5 sm:p-3 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-all ${
+              activeTabState === 'khbd'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-800'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpenCheck size={16} />
+            <span>Kế hoạch bài dạy 5512</span>
+          </button>
         </div>
 
-        {/* Modal Body: Prompt preview */}
+        {/* Modal Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Prompt đã tự động nạp Mục tiêu YCCĐ & Năng lực của bài học:
+          {/* ========================================================= */}
+          {/* TAB 1: MA TRẬN & BẢN ĐẶC TẢ CONTROLS */}
+          {/* ========================================================= */}
+          {activeTabState === 'matrix' && (
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 space-y-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal size={16} className="text-indigo-600 dark:text-indigo-400" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Tùy chỉnh Cấu trúc Đề & Mức độ nhận thức
+                  </span>
+                </div>
+
+                {/* Sub-mode switch: Ma trận vs Đặc tả */}
+                <div className="flex items-center p-0.5 bg-slate-200/70 dark:bg-slate-700/60 rounded-lg text-xs">
+                  <button
+                    onClick={() => setMatrixSubMode('matrix')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                      matrixSubMode === 'matrix'
+                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Ma trận (CV 7991)
+                  </button>
+                  <button
+                    onClick={() => setMatrixSubMode('spec')}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                      matrixSubMode === 'spec'
+                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    Bản đặc tả chi tiết
+                  </button>
+                </div>
+              </div>
+
+              {/* Duration and Presets */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Thời lượng & Loại đề:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => handleExamDurationChange('15')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        examDuration === '15'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      15 phút (TX)
+                    </button>
+                    <button
+                      onClick={() => handleExamDurationChange('45')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        examDuration === '45'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      45 phút (GK)
+                    </button>
+                    <button
+                      onClick={() => handleExamDurationChange('90')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        examDuration === '90'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      90 phút (CK)
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Tỷ lệ nhận thức:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => handleCognitivePresetChange('cv7991')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        cognitivePreset === 'cv7991'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Chuẩn 4:3:2:1
+                    </button>
+                    <button
+                      onClick={() => handleCognitivePresetChange('basic')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        cognitivePreset === 'basic'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Cơ bản 5:3:1.5
+                    </button>
+                    <button
+                      onClick={() => handleCognitivePresetChange('advanced')}
+                      className={`p-1.5 rounded-lg border text-center font-medium transition-colors ${
+                        cognitivePreset === 'advanced'
+                          ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      Nâng cao 3:3:2.5
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sliders / Numbers for Question counts */}
+              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 grid grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="block text-[11px] text-slate-500 mb-1">
+                    Phần I: 4 Lựa chọn
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={40}
+                    value={mcqCount}
+                    onChange={(e) => setMcqCount(parseInt(e.target.value) || 0)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold text-center"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-500 mb-1">
+                    Phần II: Đúng/Sai 4 ý
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={tfCount}
+                    onChange={(e) => setTfCount(parseInt(e.target.value) || 0)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold text-center"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-500 mb-1">
+                    Phần III: Trả lời ngắn
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={shortCount}
+                    onChange={(e) => setShortCount(parseInt(e.target.value) || 0)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold text-center"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB 2: ĐỀ TRẮC NGHIỆM TIN HỌC CONTROLS */}
+          {/* ========================================================= */}
+          {activeTabState === 'quiz' && (
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 space-y-3">
+              <div className="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                <SlidersHorizontal size={16} className="text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Định dạng câu hỏi & Tùy chọn đề thi
+                </span>
+              </div>
+
+              {/* 3 Question format checkboxes */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1.5">
+                  Thành phần đề thi:
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <label className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includePart1}
+                      onChange={(e) => setIncludePart1(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="font-medium">Phần I: 4 Lựa chọn</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includePart2}
+                      onChange={(e) => setIncludePart2(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="font-medium">Phần II: Đúng/Sai 4 ý</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includePart3}
+                      onChange={(e) => setIncludePart3(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="font-medium">Phần III: Trả lời ngắn</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Toggles & Competency filter */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 text-xs">
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={includeExplanations}
+                      onChange={(e) => setIncludeExplanations(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>Kèm bảng đáp án & Lời giải chi tiết</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-700 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={createVariants}
+                      onChange={(e) => setCreateVariants(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>Tạo 2 Mã đề thi hoán vị (Đề 101 & 102)</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Trọng tâm Năng lực:
+                  </label>
+                  <select
+                    value={targetCompetency}
+                    onChange={(e) => setTargetCompetency(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                  >
+                    <option value="ALL">Tất cả năng lực của bài</option>
+                    <option value="NLa">NLa: Sử dụng và quản lý CNTT</option>
+                    <option value="NLb">NLb: Ứng xử phù hợp môi trường số</option>
+                    <option value="NLc">NLc: Giải quyết vấn đề với CNTT</option>
+                    <option value="NLd">NLd: Ứng dụng CNTT tự học</option>
+                    <option value="NLe">NLe: Hợp tác trong môi trường số</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB 3: KẾ HOẠCH BÀI DẠY KHBD 5512 CONTROLS */}
+          {/* ========================================================= */}
+          {activeTabState === 'khbd' && (
+            <div className="p-3.5 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 space-y-3">
+              <div className="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                <SlidersHorizontal size={16} className="text-indigo-600 dark:text-indigo-400" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Tùy chọn Sư phạm & Học liệu dạy học
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Thời lượng giảng dạy:
+                  </label>
+                  <select
+                    value={lessonPeriods}
+                    onChange={(e) => setLessonPeriods(parseInt(e.target.value) || 2)}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 outline-none font-semibold"
+                  >
+                    <option value={1}>1 tiết (45 phút)</option>
+                    <option value={2}>2 tiết (90 phút)</option>
+                    <option value={3}>3 tiết (135 phút)</option>
+                    <option value={4}>4 tiết (180 phút)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Môi trường dạy học:
+                  </label>
+                  <select
+                    value={environment}
+                    onChange={(e) => setEnvironment(e.target.value as 'COMPUTER_LAB' | 'CLASSROOM')}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 outline-none"
+                  >
+                    <option value="COMPUTER_LAB">Phòng máy tính & Mạng Internet</option>
+                    <option value="CLASSROOM">Phòng lý thuyết / Máy chiếu</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Độ chi tiết chuỗi hoạt động:
+                  </label>
+                  <select
+                    value={pedagogyDetailLevel}
+                    onChange={(e) => setPedagogyDetailLevel(e.target.value as 'STANDARD' | 'DETAILED')}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 outline-none font-semibold"
+                  >
+                    <option value="DETAILED">Chi tiết nâng cao (Kèm Rubric & Phiếu)</option>
+                    <option value="STANDARD">Chuẩn 4 bước CV 5512 cơ bản</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Digital Tools Checkboxes */}
+              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1.5">
+                  Phần mềm & Học liệu số:
+                </label>
+                <div className="flex flex-wrap gap-1.5 text-xs">
+                  {[
+                    'VS Code & Trình duyệt Web',
+                    'Python (IDLE / Thonny)',
+                    'Dịch vụ đám mây / GitHub Pages',
+                    'Canva / Phần mềm đồ họa',
+                    'Slide bài giảng số & Phiếu học tập',
+                  ].map((tool) => {
+                    const isSelected = softwareTools.includes(tool);
+                    return (
+                      <button
+                        key={tool}
+                        type="button"
+                        onClick={() => toggleSoftwareTool(tool)}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+                          isSelected
+                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold'
+                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                        }`}
+                      >
+                        {isSelected ? '✓ ' : '+ '}
+                        {tool}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Real-time Generated Prompt Preview */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <FileCode2 size={15} className="text-indigo-600 dark:text-indigo-400" />
+                Prompt được cấu hình trực tiếp sẵn sàng gửi AI:
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {currentPrompt.length} ký tự
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-              <span>{currentPrompt.length} ký tự</span>
-            </div>
-          </div>
 
-          <div className="bg-slate-950 text-slate-200 rounded-xl p-4 font-mono text-xs overflow-y-auto max-h-[46vh] border border-slate-800 leading-relaxed shadow-inner">
-            <pre className="whitespace-pre-wrap font-sans">{currentPrompt}</pre>
+            <div className="bg-slate-950 text-slate-200 rounded-xl p-4 font-mono text-xs overflow-y-auto max-h-[38vh] border border-slate-800 leading-relaxed shadow-inner">
+              <pre className="whitespace-pre-wrap font-sans">{currentPrompt}</pre>
+            </div>
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[11px] text-slate-500 hidden sm:block">
-            💡 Dán trực tiếp prompt này vào <strong>ChatGPT, Claude hoặc Gemini</strong> để nhận kết quả chuẩn xác 100%.
-          </p>
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900 flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Button to open in Full AI Studio */}
+          <button
+            onClick={handleOpenInFullAIStudio}
+            className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[40px]"
+            title="Chuyển sang module Công cụ AI đầy đủ với bài học này"
+          >
+            <Wand2 size={15} />
+            <span>Mở trong Xưởng AI đầy đủ</span>
+          </button>
 
+          {/* Copy and Save buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleSaveToPromptLibrary}

@@ -16,8 +16,18 @@ import { CodeExerciseGenerator } from './CodeExerciseGenerator';
 type SubToolTab = 'exam-matrix' | 'quiz-builder' | 'lesson-plan' | 'code-exercise';
 
 export function AIToolsPage() {
-  const { glassClass } = useAppContext();
+  const { glassClass, globalFocus, setGlobalFocus } = useAppContext();
   const [activeSubTab, setActiveSubTab] = useState<SubToolTab>('exam-matrix');
+
+  React.useEffect(() => {
+    if (
+      globalFocus &&
+      ['exam-matrix', 'quiz-builder', 'lesson-plan', 'code-exercise'].includes(globalFocus.id)
+    ) {
+      setActiveSubTab(globalFocus.id as SubToolTab);
+      setGlobalFocus(null);
+    }
+  }, [globalFocus, setGlobalFocus]);
 
   const subTools = [
     {
