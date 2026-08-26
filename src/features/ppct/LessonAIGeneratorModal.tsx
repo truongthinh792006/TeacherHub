@@ -19,9 +19,11 @@ import {
   RotateCcw,
   SlidersHorizontal,
   FileCode2,
+  FileDown,
 } from 'lucide-react';
 import { PPCTLesson, PPCTPlan } from '../../types';
 import { useAppContext } from '../../app/AppContext';
+import { exportLessonPlan5512Word } from '../department/departmentDocxExporter';
 
 export type AIGeneratorTab = 'matrix' | 'spec' | 'quiz' | 'khbd';
 
@@ -445,6 +447,20 @@ III. HỒ SƠ DẠY HỌC ĐÍNH KÈM:
     setGlobalFocus({ id: targetSubTool, action: 'view' });
     setActiveTab('ai-tools');
     onClose();
+  };
+
+  const handleExportKHBDWord = () => {
+    exportLessonPlan5512Word(
+      lesson.lessonName,
+      plan.grade,
+      `${lesson.periods} tiết (${lesson.periods * 45} phút)`,
+      lesson.objectives,
+      lesson.competencies,
+    );
+    showAlert(
+      'Xuất Word thành công',
+      `Đã tải tệp Giáo án KHBD 5512 (.doc) cho bài "${lesson.lessonName}"!`,
+    );
   };
 
   return (
@@ -904,6 +920,17 @@ III. HỒ SƠ DẠY HỌC ĐÍNH KÈM:
 
           {/* Copy and Save buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            {activeTabState === 'khbd' && (
+              <button
+                onClick={handleExportKHBDWord}
+                className="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[40px]"
+                title="Xuất Giáo án Word .doc chuẩn CV 5512"
+              >
+                <FileDown size={15} />
+                <span>Xuất Word (.doc)</span>
+              </button>
+            )}
+
             <button
               onClick={handleSaveToPromptLibrary}
               className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[40px]"

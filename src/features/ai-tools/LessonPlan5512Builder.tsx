@@ -7,8 +7,10 @@ import {
   Sparkles,
   Laptop,
   CheckSquare,
+  FileDown,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
+import { exportLessonPlan5512Word } from '../department/departmentDocxExporter';
 
 export function LessonPlan5512Builder() {
   const { promptsCtrl, showAlert, glassClass, inputClass, btnPrimary, btnSecondary } =
@@ -94,6 +96,22 @@ YÊU CẦU ĐẦU RA:
     setSaved(true);
     showAlert('Đã lưu Giáo án', 'Đã lưu cấu trúc KHBD 5512 vào Thư viện Prompt AI.');
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleExportWord = () => {
+    const competencies: string[] = [];
+    if (focusNLa) competencies.push('NLa');
+    if (focusNLc) competencies.push('NLc');
+    if (focusNLe) competencies.push('NLe');
+
+    exportLessonPlan5512Word(
+      lessonName,
+      grade,
+      duration,
+      undefined,
+      competencies,
+    );
+    showAlert('Xuất Word thành công', 'Đã tải tệp Giáo án KHBD 5512 (.doc) chuẩn mẫu Công văn 5512!');
   };
 
   return (
@@ -296,6 +314,15 @@ YÊU CẦU ĐẦU RA:
               >
                 {saved ? <Check size={18} className="text-emerald-500" /> : <BookmarkPlus size={18} />}
                 <span>Lưu vào Thư viện</span>
+              </button>
+
+              <button
+                onClick={handleExportWord}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-center gap-1.5 transition-colors"
+                title="Xuất file Word .doc chuẩn mẫu Công văn 5512"
+              >
+                <FileDown size={17} />
+                <span>Xuất Word (.doc)</span>
               </button>
             </div>
           </div>

@@ -5,8 +5,10 @@ import {
   Copy,
   Check,
   Award,
+  FileDown,
 } from 'lucide-react';
 import { LessonEvaluationRecord } from '../../types';
+import { exportLessonEvaluationWord } from './departmentDocxExporter';
 
 interface PrintEvaluationViewProps {
   evaluation: LessonEvaluationRecord | null;
@@ -183,17 +185,28 @@ NGƯỜI DẠY (Ký tên)                  NGƯỜI DỰ GIỜ (Ký tên)`;
           </div>
         </div>
 
-        <div className="flex gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
           <button type="button" onClick={onClose} className={btnSecondary}>
             Đóng
           </button>
-          <button type="button" onClick={handleCopy} className={btnSecondary}>
-            {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-            <span>Sao chép</span>
-          </button>
-          <button type="button" onClick={handlePrint} className={btnPrimary}>
-            <Printer size={16} /> In Phiếu
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleCopy} className={btnSecondary}>
+              {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+              <span>Sao chép</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => exportLessonEvaluationWord(evaluation)}
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1.5 transition-colors"
+              title="Xuất file Word .doc chuẩn mẫu Bộ GD&ĐT"
+            >
+              <FileDown size={15} />
+              <span>Xuất Word (.doc)</span>
+            </button>
+            <button type="button" onClick={handlePrint} className={btnPrimary}>
+              <Printer size={16} /> In Phiếu
+            </button>
+          </div>
         </div>
       </div>
     </div>
