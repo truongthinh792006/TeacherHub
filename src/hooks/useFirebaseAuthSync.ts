@@ -31,6 +31,11 @@ export function useFirebaseAuthSync({
   );
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  const lastSyncedAtRef = useRef<string | null>(lastSyncedAt);
+  useEffect(() => {
+    lastSyncedAtRef.current = lastSyncedAt;
+  }, [lastSyncedAt]);
+
   const isInitialSnapshotRef = useRef(true);
 
   // Map Firebase User to Serialized Profile
@@ -65,7 +70,12 @@ export function useFirebaseAuthSync({
     const unsubscribe = onSnapshot(
       docRef,
       (docSnap) => {
-        // Skip first trigger on attach to avoid duplicate download on load
+        // 1. Ignore if local write in progress
+        if (docSnap.metadata.hasPendingWrites) {
+          return;
+        }
+
+        // 2. Skip first trigger on attach to avoid duplicate download on load
         if (isInitialSnapshotRef.current) {
           isInitialSnapshotRef.current = false;
           return;
@@ -73,12 +83,25 @@ export function useFirebaseAuthSync({
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const remoteTime = data.updatedAtClient || 0;
-          const localSyncTime = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
+          const remoteSession = data.lastUpdatedBySession;
+          const mySessionId = FirebaseService.getSessionId();
 
-          // If remote update happened more recently than local sync, download and notify
-          if (remoteTime > localSyncTime + 3000) {
-            FirebaseService.downloadFromCloud(currentUser)
+          // 3. Ignore if update originated from this browser tab / session
+          if (remoteSession && remoteSession === mySessionId) {
+            return;
+          }
+
+          const remoteTime = data.updatedAtClient || 0;
+          const localSyncTime = lastSyncedAtRef.current
+            ? new Date(lastSyncedAtRef.current).getTime()
+            : 0;
+
+          // 4. Only trigger when remote update happened more recently than local sync
+          if (remoteTime > localSyncTime + 1000) {
+            FirebaseService.downloadFromCloud(currentUser, {
+              createSnapshot: true,
+              snapshotReason: `Snapshot tự động trước khi đồng bộ từ thiết bị khác lúc ${new Date().toLocaleString('vi-VN')}`,
+            })
               .then(() => {
                 const nowIso = new Date().toISOString();
                 setLastSyncedAt(nowIso);
@@ -100,7 +123,7 @@ export function useFirebaseAuthSync({
     );
 
     return () => unsubscribe();
-  }, [currentUser, lastSyncedAt, onDataRestored, showAlert]);
+  }, [currentUser, onDataRestored, showAlert]);
 
   // Realtime Cloud Auto-upload on local mutations (debounced 2.5s)
   useEffect(() => {

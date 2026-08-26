@@ -20,7 +20,25 @@ import { validateBackupData } from './backup.validator';
 
 const CLOUD_SYNC_TIME_KEY = 'thp_firebase_last_synced';
 
+// Unique session ID per browser tab session
+const SESSION_ID: string = (() => {
+  try {
+    const existing = window.sessionStorage.getItem('thp_session_id');
+    if (existing) return existing;
+    const newId = 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+    window.sessionStorage.setItem('thp_session_id', newId);
+    return newId;
+  } catch {
+    return 'sess_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+  }
+})();
+
 export const FirebaseService = {
+  // Session Identification
+  getSessionId: (): string => {
+    return SESSION_ID;
+  },
+
   // Authentication
   loginWithGoogle: async (): Promise<User> => {
     const res = await signInWithPopup(auth, googleProvider);
@@ -76,19 +94,24 @@ export const FirebaseService = {
     };
 
     const docRef = doc(db, 'users', user.uid, 'data', 'main');
+    const nowTime = Date.now();
     await setDoc(docRef, {
       ...backupData,
-      updatedAtClient: Date.now(),
+      updatedAtClient: nowTime,
       updatedAtServer: serverTimestamp(),
       userEmail: user.email,
       userName: user.displayName,
+      lastUpdatedBySession: SESSION_ID,
     });
 
-    const nowIso = new Date().toISOString();
+    const nowIso = new Date(nowTime).toISOString();
     FirebaseService.setLastSyncedAt(nowIso);
   },
 
-  downloadFromCloud: async (user: User): Promise<boolean> => {
+  downloadFromCloud: async (
+    user: User,
+    options: { createSnapshot?: boolean; snapshotReason?: string } = {},
+  ): Promise<boolean> => {
     if (!user) throw new Error('Người dùng chưa đăng nhập.');
 
     const docRef = doc(db, 'users', user.uid, 'data', 'main');
@@ -107,10 +130,13 @@ export const FirebaseService = {
       );
     }
 
-    // 1. Create safety snapshot before overwriting
-    StorageService.createSafetySnapshot(
-      `Snapshot tự động trước khi nạp dữ liệu Firebase Cloud lúc ${new Date().toLocaleString('vi-VN')}`,
-    );
+    // 1. Create safety snapshot before overwriting (if requested or by default)
+    if (options.createSnapshot !== false) {
+      const reason =
+        options.snapshotReason ||
+        `Snapshot tự động trước khi nạp dữ liệu Firebase Cloud lúc ${new Date().toLocaleString('vi-VN')}`;
+      StorageService.createSafetySnapshot(reason);
+    }
 
     // 2. Overwrite atomically
     const success = StorageService.atomicSetAll(validation.data.data);
