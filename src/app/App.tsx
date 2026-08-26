@@ -11,7 +11,6 @@ import {
   Search,
   MoreHorizontal,
   LogIn,
-  DownloadCloud,
   CalendarDays,
   Briefcase,
   RefreshCw,
@@ -48,15 +47,6 @@ import {
   Student,
   Task,
 } from '../types';
-
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
 
 const initialTasks: Task[] = [
   {
@@ -249,11 +239,11 @@ function HeaderCloudSyncIndicator({
     return (
       <button
         onClick={openAuthModal}
-        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 transition-colors"
+        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 transition-colors shadow-sm"
         title="Đăng nhập để đồng bộ Realtime qua Cloud"
       >
         <Cloud size={13} className="text-slate-400" />
-        <span className="hidden sm:inline">Đăng nhập Cloud</span>
+        <span>Đăng nhập Cloud</span>
       </button>
     );
   }
@@ -270,7 +260,7 @@ function HeaderCloudSyncIndicator({
     <button
       onClick={() => firebaseAuth.syncNow()}
       disabled={firebaseAuth.isSyncing}
-      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
+      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all shadow-sm ${
         firebaseAuth.isSyncing
           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
           : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/15'
@@ -286,7 +276,7 @@ function HeaderCloudSyncIndicator({
         size={12}
         className={firebaseAuth.isSyncing ? 'animate-spin text-amber-500' : 'text-emerald-500'}
       />
-      <span className="hidden sm:inline">
+      <span>
         {firebaseAuth.isSyncing
           ? 'Đang đồng bộ...'
           : `Đã đồng bộ ${formatLastSync(firebaseAuth.lastSyncedAt)}`}
@@ -311,41 +301,11 @@ export default function App() {
   const [mobileMoreOpen, setMobileMoreOpen] = useState<boolean>(false);
   const [globalSearchOpen, setGlobalSearchOpen] = useState<boolean>(false);
   const [globalFocus, setGlobalFocus] = useState<GlobalFocus | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
     window.localStorage.setItem('thp_darkMode', String(darkMode));
   }, [darkMode]);
-
-  // PWA Install Prompt Listener
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
-
-    const handleAppInstalled = () => {
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
 
   const tasksCtrl = useStorageController<Task>('tasks', initialTasks);
   const promptsCtrl = useStorageController<Prompt>('prompts', initialPrompts);
@@ -516,21 +476,13 @@ export default function App() {
               })}
             </nav>
 
-            {/* Install PWA Button (Desktop Sidebar) */}
-            {deferredPrompt && (
-              <div className="px-3 pb-2">
-                <button
-                  onClick={handleInstallClick}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors"
-                >
-                  <DownloadCloud size={15} /> Cài đặt TeacherHub App
-                </button>
-              </div>
-            )}
-
-            {/* User & Cloud Sync Footer */}
+            {/* User Profile Footer */}
             <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-2 border border-slate-200/50 dark:border-slate-700/50">
+              <button
+                onClick={openAuthModal}
+                className="w-full text-left p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl border border-slate-200/50 dark:border-slate-700/50 transition-colors group"
+                title={firebaseAuth.isAuthenticated ? 'Quản lý tài khoản Cloud' : 'Đăng nhập Cloud'}
+              >
                 <div className="flex items-center gap-2.5">
                   {firebaseAuth.isAuthenticated && firebaseAuth.user?.photoURL ? (
                     <img
@@ -548,7 +500,7 @@ export default function App() {
                     </div>
                   )}
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user
                         ? firebaseAuth.user.displayName
                         : 'Local User'}
@@ -556,46 +508,29 @@ export default function App() {
                     <p className="text-[10px] text-slate-400 truncate">
                       {firebaseAuth.isAuthenticated && firebaseAuth.user
                         ? firebaseAuth.user.email
-                        : 'Lưu trữ cục bộ'}
+                        : 'Lưu trữ cục bộ (Nhấn để kết nối)'}
                     </p>
                   </div>
                 </div>
-
-                <div className="pt-1 flex items-center justify-between">
-                  <HeaderCloudSyncIndicator
-                    firebaseAuth={firebaseAuth}
-                    openAuthModal={openAuthModal}
-                  />
-                </div>
-              </div>
+              </button>
             </div>
           </aside>
 
           {/* Main content */}
           <main className="flex-1 flex flex-col h-full relative overflow-hidden">
             <header className="px-4 py-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center lg:hidden">
-                <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-base shadow-sm">
-                  T
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="flex items-center lg:hidden">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    T
+                  </div>
                 </div>
-              </div>
-              <div className="hidden lg:flex items-center gap-2">
                 <HeaderCloudSyncIndicator
                   firebaseAuth={firebaseAuth}
                   openAuthModal={openAuthModal}
                 />
               </div>
               <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3">
-                {/* Install App Header Button */}
-                {deferredPrompt && (
-                  <button
-                    onClick={handleInstallClick}
-                    className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
-                  >
-                    <DownloadCloud size={14} />
-                    <span className="hidden sm:inline">Cài App</span>
-                  </button>
-                )}
                 <button
                   onClick={() => setGlobalSearchOpen(true)}
                   className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-500 px-4 py-2 rounded-full w-10 sm:w-64 min-h-[38px] overflow-hidden transition-colors"
@@ -684,21 +619,6 @@ export default function App() {
                   </button>
                 ))}
               </div>
-
-              {/* Install PWA Option in Mobile Drawer */}
-              {deferredPrompt && (
-                <div className="pb-3 mb-2 border-b border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setMobileMoreOpen(false);
-                      handleInstallClick();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 p-2.5 bg-indigo-600 text-white rounded-xl text-xs font-semibold shadow-sm"
-                  >
-                    <DownloadCloud size={16} /> Cài đặt Teacher Hub App
-                  </button>
-                </div>
-              )}
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center px-2">
                 <HeaderCloudSyncIndicator

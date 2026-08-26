@@ -240,68 +240,81 @@ export function SettingsPage() {
 
         {/* 1. Đồng bộ Firebase Cloud Firestore (Real-time) */}
         <div className="pb-6 border-b border-slate-200 dark:border-slate-700 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                <Flame className="text-amber-500" size={20} /> Firebase Cloud (Đồng bộ Realtime)
-              </h3>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Lưu trữ tự động trên Google Cloud Firestore, đồng bộ tức thì đa thiết bị.
-              </p>
-            </div>
-            {firebaseAuth.isAuthenticated ? (
-              <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
-                <CheckCircle2 size={14} /> Trực tuyến
-              </span>
-            ) : (
-              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                Chưa đăng nhập
-              </span>
-            )}
+          <div>
+            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+              <Flame className="text-amber-500" size={20} /> Firebase Cloud (Đồng bộ Realtime)
+            </h3>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Lưu trữ tự động trên Google Cloud Firestore, đồng bộ tức thì đa thiết bị.
+            </p>
           </div>
 
           {firebaseAuth.isAuthenticated && firebaseAuth.user ? (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {firebaseAuth.user.photoURL ? (
-                  <img
-                    src={firebaseAuth.user.photoURL}
-                    alt={firebaseAuth.user.displayName || ''}
-                    className="w-11 h-11 rounded-full border-2 border-amber-300 shadow-sm"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-lg shadow-sm">
-                    {(firebaseAuth.user.displayName || 'G').charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-white">
-                    {firebaseAuth.user.displayName}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{firebaseAuth.user.email}</p>
-                  {firebaseAuth.lastSyncedAt && (
-                    <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">
-                      Cloud Sync: {new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')}
-                    </p>
+            <div className="space-y-3">
+              <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  {firebaseAuth.user.photoURL ? (
+                    <img
+                      src={firebaseAuth.user.photoURL}
+                      alt={firebaseAuth.user.displayName || ''}
+                      className="w-11 h-11 rounded-full border-2 border-amber-300 dark:border-amber-700 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-lg shadow-sm">
+                      {(firebaseAuth.user.displayName || 'G').charAt(0).toUpperCase()}
+                    </div>
                   )}
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-white">
+                      {firebaseAuth.user.displayName}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{firebaseAuth.user.email}</p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5 font-medium">
+                      {firebaseAuth.lastSyncedAt
+                        ? `Đồng bộ lần cuối: ${new Date(firebaseAuth.lastSyncedAt).toLocaleString('vi-VN')}`
+                        : 'Sẵn sàng đồng bộ đa thiết bị'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <button
+                    onClick={() => firebaseAuth.syncNow()}
+                    disabled={firebaseAuth.isSyncing}
+                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} className={firebaseAuth.isSyncing ? 'animate-spin' : ''} />
+                    <span>{firebaseAuth.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}</span>
+                  </button>
+                  <button
+                    onClick={() => firebaseAuth.logout()}
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors min-h-[38px]"
+                    title="Đăng xuất khỏi Firebase Cloud"
+                  >
+                    <LogOut size={16} />
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Secondary Actions: Manual Cloud Overrides */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => firebaseAuth.syncNow()}
+                  onClick={() => firebaseAuth.forceUpload()}
                   disabled={firebaseAuth.isSyncing}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white flex items-center justify-center gap-1.5 min-h-[38px] shadow-sm transition-all disabled:opacity-50"
+                  className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors border border-slate-200/60 dark:border-slate-700/60"
+                  title="Đẩy đè toàn bộ dữ liệu máy hiện tại lên Cloud"
                 >
-                  <RefreshCw size={14} className={firebaseAuth.isSyncing ? 'animate-spin' : ''} />
-                  <span>{firebaseAuth.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ Realtime'}</span>
+                  <CloudUpload size={14} className="text-amber-500" />
+                  <span>Tải lên Cloud (Upload)</span>
                 </button>
                 <button
-                  onClick={() => firebaseAuth.logout()}
-                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors min-h-[38px]"
-                  title="Đăng xuất Firebase"
+                  onClick={() => firebaseAuth.forceDownload()}
+                  disabled={firebaseAuth.isSyncing}
+                  className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors border border-slate-200/60 dark:border-slate-700/60"
+                  title="Nạp đè toàn bộ dữ liệu từ Cloud về máy hiện tại"
                 >
-                  <LogOut size={16} />
+                  <CloudDownload size={14} className="text-emerald-500" />
+                  <span>Tải về Máy (Download)</span>
                 </button>
               </div>
             </div>
@@ -321,26 +334,6 @@ export function SettingsPage() {
               >
                 <LogIn size={16} />
                 <span>Đăng nhập / Đăng ký</span>
-              </button>
-            </div>
-          )}
-
-          {/* Force Actions when signed in to Firebase */}
-          {firebaseAuth.isAuthenticated && (
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <button
-                onClick={() => firebaseAuth.forceUpload()}
-                disabled={firebaseAuth.isSyncing}
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <CloudUpload size={14} className="text-amber-500" /> Tải lên Cloud (Upload)
-              </button>
-              <button
-                onClick={() => firebaseAuth.forceDownload()}
-                disabled={firebaseAuth.isSyncing}
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <CloudDownload size={14} className="text-emerald-500" /> Tải về Máy (Download)
               </button>
             </div>
           )}
