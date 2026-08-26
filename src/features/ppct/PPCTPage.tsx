@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Layers,
   BookOpen,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import { PPCTLesson, PPCTPlan } from '../../types';
@@ -17,6 +18,7 @@ import { ProgressStatsCard } from './ProgressStatsCard';
 import { WeeklyProgressTracker } from './WeeklyProgressTracker';
 import { PlanEditorModal } from './PlanEditorModal';
 import { presetGrade10 } from './ppctPresets';
+import { exportPPCTToExcel } from './ppctExcelExporter';
 
 export function PPCTPage() {
   const {
@@ -135,6 +137,20 @@ export function PPCTPage() {
     });
   };
 
+  const handleExportExcel = () => {
+    if (!activePlan) return;
+    try {
+      exportPPCTToExcel(activePlan);
+      showAlert(
+        'Xuất Excel thành công',
+        `Đã xuất tệp bảng tính Excel Kế hoạch dạy học môn Tin học Khối ${activePlan.grade} (${activePlan.totalPeriods} tiết) chuẩn mẫu giáo dục!`,
+      );
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      showAlert('Lỗi xuất Excel', 'Không thể tạo tệp Excel, vui lòng thử lại.');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header Bar */}
@@ -161,11 +177,20 @@ export function PPCTPage() {
           </button>
 
           <button
+            onClick={handleExportExcel}
+            className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 min-h-[42px] rounded-xl font-semibold transition-colors flex items-center justify-center gap-1.5 text-xs shadow-sm"
+            title="Xuất bảng phân phối chương trình ra tệp Excel .xlsx chuẩn sư phạm"
+          >
+            <FileSpreadsheet size={17} />
+            <span>Xuất Excel (.xlsx)</span>
+          </button>
+
+          <button
             onClick={handleExportMarkdown}
             className={btnSecondary}
             title="Sao chép bảng tiến độ Markdown để in ấn hoặc báo cáo"
           >
-            {copied ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
+            {copied ? <Check size={17} className="text-emerald-500" /> : <Copy size={17} />}
             <span className="hidden sm:inline">Xuất Bảng MD</span>
           </button>
         </div>

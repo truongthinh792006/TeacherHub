@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2,
   Circle,
@@ -18,7 +18,13 @@ import {
   Table,
   HelpCircle,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
+  Edit3,
+  Pencil,
+  Plus,
+  Trash2,
+  ListOrdered,
 } from 'lucide-react';
 import { LessonStatus, PPCTLesson, PPCTPlan } from '../../types';
 import { localDateString } from '../../lib/date';
@@ -26,6 +32,7 @@ import {
   LessonAIGeneratorModal,
   AIGeneratorTab,
 } from './LessonAIGeneratorModal';
+import { LessonDetailEditorModal } from './LessonDetailEditorModal';
 
 interface WeeklyProgressTrackerProps {
   plan: PPCTPlan;
@@ -49,12 +56,17 @@ export function WeeklyProgressTracker({
   const [semesterFilter, setSemesterFilter] = useState<'ALL' | 1 | 2>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [editMode, setEditMode] = useState(false);
 
   // AI Generator Modal state
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<PPCTLesson | null>(null);
   const [selectedAITab, setSelectedAITab] = useState<AIGeneratorTab>('khbd');
   const [openDropdownLessonId, setOpenDropdownLessonId] = useState<string | null>(null);
+
+  // Lesson Detail Editor Modal state
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<PPCTLesson | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -132,6 +144,91 @@ export function WeeklyProgressTracker({
     setSelectedAITab(tab);
     setAiModalOpen(true);
     setOpenDropdownLessonId(null);
+  };
+
+  // Lesson Editing Operations
+  const handleOpenEditLesson = (lesson: PPCTLesson) => {
+    setEditingLesson(lesson);
+    setDetailModalOpen(true);
+  };
+
+  const handleAddNewLesson = () => {
+    const lastLesson = plan.lessons[plan.lessons.length - 1];
+    const newLesson: PPCTLesson = {
+      id: `lesson-${Date.now()}`,
+      order: (lastLesson?.order || 0) + (lastLesson?.periods || 1),
+      week: Math.min(35, (lastLesson?.week || 1) + 1),
+      semester: (lastLesson?.week || 1) >= 18 ? 2 : 1,
+      topic: 'Chủ đề mới',
+      lessonName: 'Bài học mới',
+      periods: 2,
+      type: 'LESSON',
+      status: 'PENDING',
+    };
+    setEditingLesson(newLesson);
+    setDetailModalOpen(true);
+  };
+
+  const handleSaveLessonDetail = (updatedLesson: PPCTLesson) => {
+    const exists = plan.lessons.some((l) => l.id === updatedLesson.id);
+    let updatedList: PPCTLesson[];
+    if (exists) {
+      updatedList = plan.lessons.map((l) =>
+        l.id === updatedLesson.id ? updatedLesson : l,
+      );
+    } else {
+      updatedList = [...plan.lessons, updatedLesson];
+    }
+    onBatchUpdateLessons(updatedList);
+  };
+
+  const handleDeleteLesson = (lessonId: string, lessonName: string) => {
+    showConfirm(
+      'Xóa bài học',
+      `Bạn có chắc chắn muốn xóa bài học "${lessonName}" khỏi kế hoạch phân phối chương trình?`,
+      () => {
+        const updatedList = plan.lessons.filter((l) => l.id !== lessonId);
+        onBatchUpdateLessons(updatedList);
+      },
+    );
+  };
+
+  const handleMoveLesson = (lessonId: string, direction: 'UP' | 'DOWN') => {
+    const index = plan.lessons.findIndex((l) => l.id === lessonId);
+    if (index === -1) return;
+    const targetIndex = direction === 'UP' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= plan.lessons.length) return;
+
+    const newLessons = [...plan.lessons];
+    const temp = newLessons[index];
+    newLessons[index] = newLessons[targetIndex];
+    newLessons[targetIndex] = temp;
+
+    // Recalculate order numbers continuously
+    let curr = 1;
+    const recalculated = newLessons.map((l) => {
+      const item = { ...l, order: curr };
+      curr += l.periods;
+      return item;
+    });
+
+    onBatchUpdateLessons(recalculated);
+  };
+
+  const handleAutoRecalculatePeriods = () => {
+    showConfirm(
+      'Tính lại tiết PPCT liên tục',
+      'Tự động đánh lại số tiết PPCT bắt đầu từ tiết 1 liên tục theo số tiết của từng bài học?',
+      () => {
+        let curr = 1;
+        const recalculated = plan.lessons.map((l) => {
+          const item = { ...l, order: curr };
+          curr += l.periods;
+          return item;
+        });
+        onBatchUpdateLessons(recalculated);
+      },
+    );
   };
 
   const getTypeBadge = (type: string) => {
@@ -216,7 +313,7 @@ export function WeeklyProgressTracker({
 
           {/* Search & Status Filter */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-56">
+            <div className="relative flex-1 sm:w-52">
               <Search
                 size={16}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -236,42 +333,84 @@ export function WeeklyProgressTracker({
               onChange={(e) => setStatusFilter(e.target.value)}
               className={`${inputClass} w-auto min-h-[38px] text-xs py-1.5`}
             >
-              <option value="ALL">Tất cả trạng thái</option>
-              <option value="COMPLETED">Đã hoàn thành</option>
+              <option value="ALL">Tất cả</option>
+              <option value="COMPLETED">Đã dạy</option>
               <option value="PENDING">Chưa dạy</option>
-              <option value="DELAYED">Chậm tiến độ</option>
+              <option value="DELAYED">Chậm</option>
               <option value="MAKEUP">Dạy bù</option>
             </select>
+
+            {/* Toggle Edit Mode Button */}
+            <button
+              onClick={() => setEditMode((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 min-h-[38px] ${
+                editMode
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60'
+              }`}
+              title="Bật/Tắt chế độ chỉnh sửa bài học, thêm dòng, xóa dòng"
+            >
+              <Edit3 size={14} />
+              <span className="hidden sm:inline">Chỉnh sửa</span>
+            </button>
           </div>
         </div>
 
-        {/* Quick batch buttons */}
+        {/* Quick batch buttons & Edit toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
-          <span className="text-slate-500">
-            Hiển thị <strong>{filteredLessons.length}</strong> / {plan.lessons.length} bài học
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500">
+              Hiển thị <strong>{filteredLessons.length}</strong> / {plan.lessons.length} bài học
+            </span>
+            {editMode && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                Đang ở Chế độ Chỉnh sửa
+              </span>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleMarkAllSemester(1)}
-              className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-            >
-              <CheckCheck size={14} /> Xong HK1
-            </button>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <button
-              onClick={() => handleMarkAllSemester(2)}
-              className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-            >
-              <CheckCheck size={14} /> Xong HK2
-            </button>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <button
-              onClick={handleResetAll}
-              className="text-[11px] font-semibold text-slate-500 hover:text-rose-500 transition-colors"
-            >
-              Đặt lại
-            </button>
+            {editMode ? (
+              <>
+                <button
+                  onClick={handleAddNewLesson}
+                  className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                >
+                  <Plus size={14} /> Thêm bài học
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <button
+                  onClick={handleAutoRecalculatePeriods}
+                  className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                  title="Tự động tính lại số thứ tự tiết từ tiết 1"
+                >
+                  <ListOrdered size={14} /> Tính lại tiết
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => handleMarkAllSemester(1)}
+                  className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                >
+                  <CheckCheck size={14} /> Xong HK1
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <button
+                  onClick={() => handleMarkAllSemester(2)}
+                  className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                >
+                  <CheckCheck size={14} /> Xong HK2
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <button
+                  onClick={handleResetAll}
+                  className="text-[11px] font-semibold text-slate-500 hover:text-rose-500 transition-colors"
+                >
+                  Đặt lại
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -282,13 +421,22 @@ export function WeeklyProgressTracker({
           <div className={`${glassClass} p-8 text-center text-slate-500 space-y-2`}>
             <Calendar size={32} className="mx-auto opacity-30" />
             <p>Không tìm thấy bài học nào phù hợp với bộ lọc.</p>
+            {editMode && (
+              <button
+                onClick={handleAddNewLesson}
+                className="mt-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold text-xs inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> Thêm bài học đầu tiên
+              </button>
+            )}
           </div>
         ) : (
-          filteredLessons.map((lesson) => {
+          filteredLessons.map((lesson, idx) => {
             const isCompleted = lesson.status === 'COMPLETED';
             const isDelayed = lesson.status === 'DELAYED';
             const isMakeup = lesson.status === 'MAKEUP';
             const isMenuOpen = openDropdownLessonId === lesson.id;
+            const fullIndex = plan.lessons.findIndex((l) => l.id === lesson.id);
 
             return (
               <div
@@ -301,19 +449,40 @@ export function WeeklyProgressTracker({
                     : ''
                 }`}
               >
-                {/* Left: Checkbox & Info */}
+                {/* Left: Reorder controls (in edit mode) or Checkbox */}
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <button
-                    onClick={() => handleToggleComplete(lesson)}
-                    className="mt-0.5 flex-shrink-0 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                    title={isCompleted ? 'Đánh dấu chưa dạy' : 'Đánh dấu đã hoàn thành'}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 size={22} className="text-emerald-500" />
-                    ) : (
-                      <Circle size={22} />
-                    )}
-                  </button>
+                  {editMode ? (
+                    <div className="flex flex-col items-center gap-0.5 mt-0.5 flex-shrink-0">
+                      <button
+                        onClick={() => handleMoveLesson(lesson.id, 'UP')}
+                        disabled={fullIndex === 0}
+                        className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-30"
+                        title="Di chuyển lên"
+                      >
+                        <ChevronUp size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleMoveLesson(lesson.id, 'DOWN')}
+                        disabled={fullIndex === plan.lessons.length - 1}
+                        className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-30"
+                        title="Di chuyển xuống"
+                      >
+                        <ChevronDown size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleToggleComplete(lesson)}
+                      className="mt-0.5 flex-shrink-0 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      title={isCompleted ? 'Đánh dấu chưa dạy' : 'Đánh dấu đã hoàn thành'}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 size={22} className="text-emerald-500" />
+                      ) : (
+                        <Circle size={22} />
+                      )}
+                    </button>
+                  )}
 
                   <div className="flex-1 space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -341,13 +510,23 @@ export function WeeklyProgressTracker({
                       )}
                     </div>
 
-                    <h4
-                      className={`text-sm font-bold text-slate-900 dark:text-white ${
-                        isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : ''
-                      }`}
-                    >
-                      {lesson.lessonName}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4
+                        className={`text-sm font-bold text-slate-900 dark:text-white ${
+                          isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                        }`}
+                      >
+                        {lesson.lessonName}
+                      </h4>
+                      {/* Quick Edit icon button */}
+                      <button
+                        onClick={() => handleOpenEditLesson(lesson)}
+                        className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Chỉnh sửa chi tiết bài học này"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    </div>
 
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                       {lesson.topic}
@@ -361,8 +540,27 @@ export function WeeklyProgressTracker({
                   </div>
                 </div>
 
-                {/* Right: AI Tools Dropdown + Status Selector & Date */}
+                {/* Right: AI Tools + Actions */}
                 <div className="flex flex-wrap items-center gap-2 lg:self-center pl-8 lg:pl-0">
+                  {/* Delete & Edit Buttons in Edit Mode */}
+                  {editMode ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleOpenEditLesson(lesson)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center gap-1"
+                      >
+                        <Edit3 size={13} /> Sửa
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLesson(lesson.id, lesson.lessonName)}
+                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                        title="Xóa bài học này"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  ) : null}
+
                   {/* AI Assistant Button & Dropdown Menu */}
                   <div className="relative">
                     <button
@@ -502,6 +700,17 @@ export function WeeklyProgressTracker({
         lesson={selectedLesson}
         plan={plan}
         initialTab={selectedAITab}
+      />
+
+      {/* Lesson Detail Editor Modal */}
+      <LessonDetailEditorModal
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        lesson={editingLesson}
+        onSave={handleSaveLessonDetail}
+        inputClass={inputClass}
+        btnPrimary="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl font-semibold transition-colors flex items-center justify-center gap-1.5 text-xs shadow-sm"
+        btnSecondary={btnSecondary}
       />
     </div>
   );
