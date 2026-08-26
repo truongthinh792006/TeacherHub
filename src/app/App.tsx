@@ -31,7 +31,7 @@ import { SettingsPage } from '../features/settings/SettingsPage';
 import { AIToolsPage } from '../features/ai-tools/AIToolsPage';
 import { PPCTPage } from '../features/ppct/PPCTPage';
 import { DepartmentPage } from '../features/department/DepartmentPage';
-import { presetGrade10 } from '../features/ppct/ppctPresets';
+import { presetGrade10, presetGrade12 } from '../features/ppct/ppctPresets';
 import { GlobalSearch } from '../components/ui/GlobalSearch';
 import { AppModal } from '../components/ui/AppModal';
 import { AuthModal } from '../components/auth/AuthModal';
@@ -100,6 +100,12 @@ const initialPPCT: PPCTPlan[] = [
     id: 'plan-default-10',
     createdAt: Date.now(),
     updatedAt: Date.now(),
+  },
+  {
+    ...presetGrade12,
+    id: 'plan-default-12',
+    createdAt: Date.now() + 1,
+    updatedAt: Date.now() + 1,
   },
 ];
 

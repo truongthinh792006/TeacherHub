@@ -53,6 +53,12 @@ export type TrackType = 'GENERAL' | 'ICT' | 'CS';
 export type LessonStatus = 'PENDING' | 'COMPLETED' | 'DELAYED' | 'MAKEUP';
 export type LessonType = 'LESSON' | 'PRACTICE' | 'MIDTERM' | 'FINAL' | 'REVIEW' | 'PROJECT';
 
+export interface LessonObjectives {
+  know?: string[];
+  understand?: string[];
+  apply?: string[];
+}
+
 export interface PPCTLesson {
   id: string;
   order: number;
@@ -66,6 +72,8 @@ export interface PPCTLesson {
   scheduledDate?: string;
   completedDate?: string;
   notes?: string;
+  competencies?: string[];
+  objectives?: LessonObjectives;
 }
 
 export interface PPCTPlan extends BaseRecord {

@@ -71,8 +71,8 @@ export function PlanEditorModal({
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200 space-y-5">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <Calendar className="text-blue-500" size={20} /> Tạo Kế hoạch PPCT mới
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Calendar className="text-indigo-600 dark:text-indigo-400" size={20} /> Tạo Kế hoạch PPCT mới
           </h3>
           <button
             onClick={onClose}
@@ -89,7 +89,7 @@ export function PlanEditorModal({
             onClick={() => setMode('PRESET')}
             className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               mode === 'PRESET'
-                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -100,7 +100,7 @@ export function PlanEditorModal({
             onClick={() => setMode('CUSTOM')}
             className={`py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               mode === 'CUSTOM'
-                ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                 : 'text-slate-600 dark:text-slate-400'
             }`}
           >
@@ -114,19 +114,19 @@ export function PlanEditorModal({
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 Chọn Mẫu Phân phối chương trình:
               </label>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                 {allPPCTPresets.map((preset, idx) => (
                   <div
                     key={idx}
                     onClick={() => setSelectedPresetIndex(idx)}
                     className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                       selectedPresetIndex === idx
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/40'
+                        ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 shadow-sm'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300'
                     }`}
                   >
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-white">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">
                         {preset.title}
                       </h4>
                       <p className="text-[11px] text-slate-500">
@@ -134,8 +134,8 @@ export function PlanEditorModal({
                       </p>
                     </div>
                     {selectedPresetIndex === idx && (
-                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                        <Check size={14} />
+                      <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                        <Check size={12} />
                       </div>
                     )}
                   </div>

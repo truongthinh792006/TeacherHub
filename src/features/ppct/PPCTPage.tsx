@@ -140,8 +140,8 @@ export function PPCTPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
-            <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl shadow-md">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+            <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
               <CalendarDays size={22} />
             </div>
             Phân phối chương trình & Tiến độ
@@ -175,7 +175,7 @@ export function PPCTPage() {
       {ppctCtrl.data.length > 0 && (
         <div className={`${glassClass} p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
           <div className="flex items-center gap-3 flex-1 overflow-hidden">
-            <Layers className="text-blue-500 flex-shrink-0" size={20} />
+            <Layers className="text-indigo-600 dark:text-indigo-400 flex-shrink-0" size={20} />
             <div className="flex-1 min-w-[200px]">
               <label className="block text-[10px] uppercase font-bold text-slate-400">
                 Kế hoạch đang theo dõi:

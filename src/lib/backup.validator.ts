@@ -295,6 +295,26 @@ export function validateBackupData(raw: unknown): BackupValidationResult {
               ? (l.type as LessonType)
               : 'LESSON';
 
+            const competencies = Array.isArray(l.competencies)
+              ? (l.competencies as string[]).filter(isValidString)
+              : undefined;
+
+            const rawObj = l.objectives as Record<string, unknown> | undefined;
+            const objectives =
+              rawObj && typeof rawObj === 'object'
+                ? {
+                    know: Array.isArray(rawObj.know)
+                      ? (rawObj.know as string[]).filter(isValidString)
+                      : undefined,
+                    understand: Array.isArray(rawObj.understand)
+                      ? (rawObj.understand as string[]).filter(isValidString)
+                      : undefined,
+                    apply: Array.isArray(rawObj.apply)
+                      ? (rawObj.apply as string[]).filter(isValidString)
+                      : undefined,
+                  }
+                : undefined;
+
             lessons.push({
               id: sanitizeId(l.id),
               order: isValidNumber(l.order) ? l.order : lIndex + 1,
@@ -308,6 +328,8 @@ export function validateBackupData(raw: unknown): BackupValidationResult {
               scheduledDate: isValidString(l.scheduledDate) ? l.scheduledDate : undefined,
               completedDate: isValidString(l.completedDate) ? l.completedDate : undefined,
               notes: isValidString(l.notes) ? l.notes : undefined,
+              competencies: competencies && competencies.length > 0 ? competencies : undefined,
+              objectives,
             });
           });
         }
