@@ -1,5 +1,6 @@
 import { saveAs } from 'file-saver';
 import {
+  DepartmentEquipmentRecord,
   DepartmentMeetingRecord,
   LessonEvaluationRecord,
   TeacherAssignmentRecord,
@@ -376,6 +377,7 @@ export function exportLessonEvaluationWord(
 // =================================================================
 export function exportAppendix1Word(
   plans: PPCTPlan[],
+  equipments: DepartmentEquipmentRecord[] = [],
   schoolName: string = 'TRƯỜNG THPT',
   deptName: string = 'TỔ TIN HỌC - CÔNG NGHỆ',
   year: string = '2024 - 2025',
@@ -384,52 +386,21 @@ export function exportAppendix1Word(
   const plan11 = plans.find((p) => p.grade === '11');
   const plan12 = plans.find((p) => p.grade === '12');
 
-  const html = `
-<table class="header-table" style="width: 100%;">
-  <tr>
-    <td style="width: 45%; text-align: center;">
-      <p class="uppercase">${schoolName}</p>
-      <p class="bold uppercase">${deptName}</p>
-      <div class="line-divider"></div>
-    </td>
-    <td style="width: 55%; text-align: center;">
-      <p class="bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-      <p class="bold italic">Độc lập - Tự do - Hạnh phúc</p>
-      <div class="line-divider"></div>
-    </td>
-  </tr>
-</table>
-
-<h1 style="margin-top: 18pt;">KẾ HOẠCH DẠY HỌC CỦA TỔ CHUYÊN MÔN</h1>
-<p class="center bold uppercase">MÔN TIN HỌC - NĂM HỌC ${year}</p>
-<p class="center italic">(Ban hành kèm theo Phụ lục 1, Công văn số 5512/BGDĐT-GDTrH)</p>
-
-<h2>I. KHUNG KẾ HOẠCH DẠY HỌC CÁC KHỐI LỚP (GDPT 2018):</h2>
-
-<h3>1. Khối lớp 10 (Chương trình chuẩn):</h3>
-<p>- Thời lượng: 70 tiết / 35 tuần (Học kỳ I: 18 tuần x 2 tiết = 36 tiết; Học kỳ II: 17 tuần x 2 tiết = 34 tiết).</p>
-<p>- Số lượng bài học dự kiến: ${plan10?.lessons.length || 35} bài học và hoạt động giáo dục.</p>
-
-<h3>2. Khối lớp 11 (Định hướng Tin học Ứng dụng & Khoa học máy tính):</h3>
-<p>- Thời lượng: 70 tiết / 35 tuần (Học kỳ I: 36 tiết; Học kỳ II: 34 tiết).</p>
-<p>- Số lượng bài học dự kiến: ${plan11?.lessons.length || 35} bài học.</p>
-
-<h3>3. Khối lớp 12 (Bộ sách Kết nối tri thức với cuộc sống - Định hướng ICT):</h3>
-<p>- Thời lượng: 70 tiết / 35 tuần.</p>
-<p>- Cấu trúc chương trình: 28 bài học SGK chuẩn GDPT 2018 (Chủ đề 1 đến Chủ đề 7).</p>
-
-<h2>II. KẾ HOẠCH THIẾT BỊ DẠY HỌC VÀ PHÒNG MÁY TÍNH THỰC HÀNH:</h2>
-<table>
-  <thead>
+  const eqRowsHtml =
+    equipments.length > 0
+      ? equipments
+          .map(
+            (eq, idx) => `
     <tr>
-      <th style="width: 8%;">STT</th>
-      <th style="width: 32%;">Tên thiết bị / Phòng thực hành</th>
-      <th style="width: 15%;">Số lượng</th>
-      <th style="width: 25%;">Tình trạng kỹ thuật</th>
-      <th style="width: 20%;">Phục vụ bài học / Khối</th>
-    </tr>
-  </thead>
-  <tbody>
+      <td class="center">${idx + 1}</td>
+      <td><strong>${eq.name}</strong></td>
+      <td class="center">${eq.quantity}</td>
+      <td>${eq.condition}</td>
+      <td>${eq.assignedGrades}${eq.notes ? `<br><span class="italic">(${eq.notes})</span>` : ''}</td>
+    </tr>`,
+          )
+          .join('')
+      : `
     <tr>
       <td class="center">1</td>
       <td><strong>Phòng máy tính số 1</strong> (45 máy trạm + 1 máy chủ giáo viên)</td>
@@ -457,7 +428,58 @@ export function exportAppendix1Word(
       <td class="center">02 bộ</td>
       <td>Độ nét cao, phục vụ trình chiếu bài giảng điện tử số hóa</td>
       <td>Các tiết lý thuyết tại phòng bộ môn</td>
+    </tr>`;
+
+  const html = `
+<table class="header-table" style="width: 100%;">
+  <tr>
+    <td style="width: 45%; text-align: center;">
+      <p class="uppercase">${schoolName}</p>
+      <p class="bold uppercase">${deptName}</p>
+      <div class="line-divider"></div>
+    </td>
+    <td style="width: 55%; text-align: center;">
+      <p class="bold uppercase">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+      <p class="bold italic">Độc lập - Tự do - Hạnh phúc</p>
+      <div class="line-divider"></div>
+    </td>
+  </tr>
+</table>
+
+<h1 style="margin-top: 18pt;">KẾ HOẠCH DẠY HỌC CỦA TỔ CHUYÊN MÔN</h1>
+<p class="center bold uppercase">MÔN TIN HỌC - NĂM HỌC ${year}</p>
+<p class="center italic">(Ban hành kèm theo Phụ lục 1, Công văn số 5512/BGDĐT-GDTrH)</p>
+
+<h2>I. KHUNG KẾ HOẠCH DẠY HỌC CÁC KHỐI LỚP (GDPT 2018):</h2>
+
+<h3>1. Khối lớp 10 (Chương trình chuẩn):</h3>
+<p>- Thời lượng: 70 tiết / 35 tuần (Học kỳ I: 18 tuần x 2 tiết = 36 tiết; Học kỳ II: 17 tuần x 2 tiết = 34 tiết).</p>
+<p>- Số lượng bài học dự kiến: ${plan10?.lessons.length || 35} bài học và hoạt động giáo dục.</p>
+<p>- Lớp phụ trách: ${plan10?.assignedClasses || 'Toàn khối 10'}.</p>
+
+<h3>2. Khối lớp 11 (Định hướng Tin học Ứng dụng & Khoa học máy tính):</h3>
+<p>- Thời lượng: 70 tiết / 35 tuần (Học kỳ I: 36 tiết; Học kỳ II: 34 tiết).</p>
+<p>- Số lượng bài học dự kiến: ${plan11?.lessons.length || 35} bài học.</p>
+<p>- Lớp phụ trách: ${plan11?.assignedClasses || 'Toàn khối 11'}.</p>
+
+<h3>3. Khối lớp 12 (Bộ sách Kết nối tri thức với cuộc sống - Định hướng ICT):</h3>
+<p>- Thời lượng: 70 tiết / 35 tuần.</p>
+<p>- Cấu trúc chương trình: 28 bài học SGK chuẩn GDPT 2018 (Chủ đề 1 đến Chủ đề 7).</p>
+<p>- Lớp phụ trách: ${plan12?.assignedClasses || 'Toàn khối 12'}.</p>
+
+<h2>II. KẾ HOẠCH THIẾT BỊ DẠY HỌC VÀ PHÒNG MÁY TÍNH THỰC HÀNH:</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 8%;">STT</th>
+      <th style="width: 30%;">Tên thiết bị / Phòng thực hành</th>
+      <th style="width: 15%;">Số lượng</th>
+      <th style="width: 25%;">Tình trạng kỹ thuật</th>
+      <th style="width: 22%;">Phục vụ bài học / Khối</th>
     </tr>
+  </thead>
+  <tbody>
+${eqRowsHtml}
   </tbody>
 </table>
 

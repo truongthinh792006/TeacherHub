@@ -23,17 +23,23 @@ import {
   Monitor,
   HardDrive,
   Network,
+  RotateCcw,
+  Wrench,
 } from 'lucide-react';
 import { useAppContext } from '../../app/AppContext';
 import {
+  DepartmentEquipmentRecord,
   DepartmentMeetingRecord,
   DepartmentRecord,
   LessonEvaluationRecord,
   TeacherAssignmentRecord,
+  PPCTPlan,
 } from '../../types';
 import { LessonObservationForm } from './LessonObservationForm';
 import { MeetingMinutesModal } from './MeetingMinutesModal';
 import { TeacherAssignmentModal } from './TeacherAssignmentModal';
+import { EquipmentModal } from './EquipmentModal';
+import { PlanAssignmentModal } from './PlanAssignmentModal';
 import { PrintEvaluationView } from './PrintEvaluationView';
 import { PrintMeetingView } from './PrintMeetingView';
 import {
@@ -52,6 +58,41 @@ type DepartmentSubTab =
   | 'plan-appendix2'
   | 'meetings'
   | 'evaluations';
+
+const DEFAULT_EQUIPMENTS: Omit<DepartmentEquipmentRecord, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    recordType: 'EQUIPMENT',
+    name: 'Phòng máy tính số 1 (Phòng A)',
+    quantity: '46 máy tính',
+    condition: 'Hoạt động tốt, mạng LAN/Internet 150Mbps',
+    assignedGrades: 'Khối 10, Khối 12',
+    notes: 'Thực hành lập trình & thiết kế Web',
+  },
+  {
+    recordType: 'EQUIPMENT',
+    name: 'Phòng máy tính số 2 (Phòng B)',
+    quantity: '41 máy tính',
+    condition: 'Hoạt động tốt, cài đặt VS Code, Python, Office, GIMP',
+    assignedGrades: 'Khối 11, Khối 12',
+    notes: 'Thực hành mạng máy tính & đồ họa',
+  },
+  {
+    recordType: 'EQUIPMENT',
+    name: 'Bộ thiết bị mạng thực hành',
+    quantity: '04 bộ',
+    condition: 'Switch, Router Wi-Fi, Kìm bấm cáp',
+    assignedGrades: 'Khối 12 (Bài 3, 4, 5, 22)',
+    notes: 'Thực hành kết nối mạng nội bộ',
+  },
+  {
+    recordType: 'EQUIPMENT',
+    name: 'Máy chiếu & Tivi tương tác',
+    quantity: '02 bộ',
+    condition: 'Độ nét cao, kết nối không dây HDMI',
+    assignedGrades: 'Các khối lớp',
+    notes: 'Trình chiếu bài giảng điện tử số hóa',
+  },
+];
 
 export function DepartmentPage() {
   const {
@@ -83,6 +124,11 @@ export function DepartmentPage() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [editingAssign, setEditingAssign] = useState<TeacherAssignmentRecord | null>(null);
 
+  const [equipmentModalOpen, setEquipmentModalOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<DepartmentEquipmentRecord | null>(null);
+
+  const [editingPlan, setEditingPlan] = useState<PPCTPlan | null>(null);
+
   // Filter records by type
   const evaluations = departmentCtrl.data.filter(
     (r): r is LessonEvaluationRecord => r.recordType === 'EVALUATION',
@@ -92,6 +138,9 @@ export function DepartmentPage() {
   );
   const assignments = departmentCtrl.data.filter(
     (r): r is TeacherAssignmentRecord => r.recordType === 'ASSIGNMENT',
+  );
+  const equipments = departmentCtrl.data.filter(
+    (r): r is DepartmentEquipmentRecord => r.recordType === 'EQUIPMENT',
   );
 
   // Statistics
@@ -141,15 +190,43 @@ export function DepartmentPage() {
     }
   };
 
+  const handleSaveEquipment = (
+    recordData: Omit<DepartmentEquipmentRecord, 'id' | 'createdAt' | 'updatedAt'>,
+  ) => {
+    if (editingEquipment) {
+      departmentCtrl.updateItem(editingEquipment.id, recordData);
+      showAlert('Thành công', 'Đã cập nhật thông tin thiết bị / phòng máy!');
+      setEditingEquipment(null);
+    } else {
+      departmentCtrl.addItem(recordData);
+      showAlert('Thành công', 'Đã thêm thiết bị / phòng thực hành mới!');
+    }
+  };
+
+  const handleSavePlanAssignment = (planId: string, updates: Partial<PPCTPlan>) => {
+    ppctCtrl.updateItem(planId, updates);
+    showAlert('Thành công', 'Đã cập nhật thông tin khung PPCT!');
+  };
+
   const handleDeleteRecord = (id: string, name: string) => {
     showConfirm('Xác nhận xóa', `Bạn có chắc chắn muốn xóa bản ghi "${name}"?`, () => {
       departmentCtrl.deleteItem(id);
     });
   };
 
+  const handleSeedDefaultEquipments = () => {
+    DEFAULT_EQUIPMENTS.forEach((eq) => {
+      departmentCtrl.addItem(eq);
+    });
+    showAlert(
+      'Khởi tạo thành công',
+      'Đã nạp 4 thiết bị và phòng máy thực hành mẫu vào hệ thống!',
+    );
+  };
+
   const handleExportAppendix1Docx = () => {
     try {
-      exportAppendix1Word(ppctCtrl.data);
+      exportAppendix1Word(ppctCtrl.data, equipments);
       showAlert(
         'Xuất Word thành công',
         'Đã tải tệp Word Kế hoạch dạy học của Tổ chuyên môn (Phụ lục 1 CV 5512)!',
@@ -162,7 +239,7 @@ export function DepartmentPage() {
 
   const handleExportAppendix1Excel = () => {
     try {
-      exportDepartmentAppendix1Excel(ppctCtrl.data);
+      exportDepartmentAppendix1Excel(ppctCtrl.data, equipments);
       showAlert(
         'Xuất Excel thành công',
         'Đã tải tệp Excel Kế hoạch dạy học và thiết bị phòng máy (Phụ lục 1 CV 5512)!',
@@ -426,7 +503,7 @@ export function DepartmentPage() {
                 onClick={() => setMainActiveTab('ppct')}
                 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
               >
-                <span>Xem phân hệ PPCT</span>
+                <span>Xem chi tiết PPCT</span>
                 <ExternalLink size={13} />
               </button>
             </div>
@@ -435,98 +512,172 @@ export function DepartmentPage() {
               {ppctCtrl.data.map((plan) => (
                 <div
                   key={plan.id}
-                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 space-y-2"
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 space-y-2.5 flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono">
-                      Khối {plan.grade} • {plan.track}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-semibold">
-                      {plan.academicYear}
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-mono">
+                        Khối {plan.grade} • {plan.track}
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-semibold">
+                        {plan.academicYear}
+                      </span>
+                    </div>
+
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
+                      {plan.title}
+                    </h4>
+
+                    <div className="text-xs text-slate-500 space-y-1">
+                      <p>• {plan.lessons.length} bài học và hoạt động giáo dục</p>
+                      <p>• Tổng số: {plan.totalPeriods} tiết / {plan.totalWeeks} tuần thực học</p>
+                      <p>
+                        • Lớp phụ trách:{' '}
+                        <strong className="text-slate-700 dark:text-slate-300">
+                          {plan.assignedClasses || 'Toàn khối'}
+                        </strong>
+                      </p>
+                    </div>
                   </div>
 
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
-                    {plan.title}
-                  </h4>
-
-                  <div className="text-xs text-slate-500 space-y-1">
-                    <p>• {plan.lessons.length} bài học và hoạt động giáo dục</p>
-                    <p>• Tổng số: {plan.totalPeriods} tiết / {plan.totalWeeks} tuần thực học</p>
-                    <p>• Lớp phụ trách: {plan.assignedClasses || 'Toàn khối'}</p>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end">
+                    <button
+                      onClick={() => setEditingPlan(plan)}
+                      className="px-2.5 py-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg flex items-center gap-1 transition-colors"
+                      title="Chỉnh sửa thông tin phân công khung PPCT"
+                    >
+                      <Edit size={13} />
+                      <span>Sửa phân công</span>
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Section II: Kế hoạch phòng máy & thiết bị */}
+          {/* Section II: Kế hoạch phòng máy & thiết bị (DỮ LIỆU ĐỘNG & CRUD) */}
           <div className={`${glassClass} p-4 sm:p-5 space-y-4`}>
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Monitor size={18} className="text-blue-600 dark:text-blue-400" />
-                II. Kế hoạch Thiết bị dạy học và Phòng máy tính thực hành
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Bố trí phòng máy và phương tiện phục vụ các tiết thực hành theo đúng PPCT.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Monitor size={18} className="text-blue-600 dark:text-blue-400" />
+                  II. Kế hoạch Thiết bị dạy học và Phòng máy tính thực hành
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Quản lý danh mục phòng thực hành, tình trạng kỹ thuật và trang thiết bị chuyên môn.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {equipments.length === 0 && (
+                  <button
+                    onClick={handleSeedDefaultEquipments}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    title="Nạp 4 thiết bị và phòng máy chuẩn mẫu"
+                  >
+                    <RotateCcw size={14} />
+                    <span>Nạp mẫu chuẩn</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setEditingEquipment(null);
+                    setEquipmentModalOpen(true);
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-3.5 py-1.5 rounded-xl font-semibold transition-colors flex items-center gap-1.5 text-xs shadow-sm"
+                >
+                  <Plus size={15} />
+                  <span>Thêm thiết bị / Phòng máy</span>
+                </button>
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
-                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="p-3">Phòng thực hành / Thiết bị</th>
-                    <th className="p-3">Số lượng</th>
-                    <th className="p-3">Tình trạng kỹ thuật</th>
-                    <th className="p-3">Khối lớp sử dụng</th>
-                    <th className="p-3">Ghi chú</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
-                  <tr>
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                      Phòng máy tính 1 (Phòng A)
-                    </td>
-                    <td className="p-3">46 máy tính</td>
-                    <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">
-                      Hoạt động tốt, mạng LAN/Internet 150Mbps
-                    </td>
-                    <td className="p-3">Khối 10, Khối 12</td>
-                    <td className="p-3">Thực hành lập trình & thiết kế Web</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                      Phòng máy tính 2 (Phòng B)
-                    </td>
-                    <td className="p-3">41 máy tính</td>
-                    <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">
-                      Cài đặt VS Code, Python, Office, GIMP
-                    </td>
-                    <td className="p-3">Khối 11, Khối 12</td>
-                    <td className="p-3">Thực hành mạng máy tính & đồ họa</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                      Bộ thiết bị mạng thực hành
-                    </td>
-                    <td className="p-3">04 bộ</td>
-                    <td className="p-3">Switch, Router Wi-Fi, Kìm bấm cáp</td>
-                    <td className="p-3">Khối 12 (Bài 3, 4, 5, 22)</td>
-                    <td className="p-3">Thực hành kết nối mạng nội bộ</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                      Máy chiếu & Tivi tương tác
-                    </td>
-                    <td className="p-3">02 bộ</td>
-                    <td className="p-3">Độ nét cao, kết nối không dây HDMI</td>
-                    <td className="p-3">Các khối lớp</td>
-                    <td className="p-3">Trình chiếu bài giảng điện tử số hóa</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {equipments.length === 0 ? (
+              <div className="p-8 text-center text-slate-500 space-y-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+                <Monitor size={36} className="mx-auto opacity-30 text-blue-500" />
+                <p className="text-xs">Chưa có thiết bị hoặc phòng máy tính nào được ghi nhận.</p>
+                <div className="flex items-center justify-center gap-2 pt-1">
+                  <button
+                    onClick={handleSeedDefaultEquipments}
+                    className="px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Sparkles size={14} />
+                    <span>Khởi tạo 4 thiết bị mẫu chuẩn</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingEquipment(null);
+                      setEquipmentModalOpen(true);
+                    }}
+                    className={btnPrimary}
+                  >
+                    <Plus size={14} /> Thêm thủ công
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="p-3 w-10 text-center">STT</th>
+                      <th className="p-3">Phòng thực hành / Thiết bị</th>
+                      <th className="p-3">Số lượng</th>
+                      <th className="p-3">Tình trạng kỹ thuật</th>
+                      <th className="p-3">Khối lớp sử dụng</th>
+                      <th className="p-3">Ghi chú</th>
+                      <th className="p-3 text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                    {equipments.map((eq, idx) => (
+                      <tr
+                        key={eq.id}
+                        className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="p-3 text-center text-slate-400 font-mono">
+                          {idx + 1}
+                        </td>
+                        <td className="p-3 font-semibold text-slate-900 dark:text-white">
+                          {eq.name}
+                        </td>
+                        <td className="p-3 font-medium text-indigo-600 dark:text-indigo-400">
+                          {eq.quantity}
+                        </td>
+                        <td className="p-3 text-emerald-600 dark:text-emerald-400 font-medium">
+                          {eq.condition}
+                        </td>
+                        <td className="p-3">{eq.assignedGrades}</td>
+                        <td className="p-3 text-slate-500 italic">
+                          {eq.notes || '—'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => {
+                                setEditingEquipment(eq);
+                                setEquipmentModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                              title="Sửa thiết bị"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRecord(eq.id, eq.name)}
+                              className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                              title="Xóa thiết bị"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Section III: Kế hoạch kiểm tra định kỳ (CV 7991) */}
@@ -1034,6 +1185,29 @@ export function DepartmentPage() {
         }}
         onSave={handleSaveAssign}
         initialData={editingAssign}
+        inputClass={inputClass}
+        btnPrimary={btnPrimary}
+        btnSecondary={btnSecondary}
+      />
+
+      <EquipmentModal
+        isOpen={equipmentModalOpen}
+        onClose={() => {
+          setEquipmentModalOpen(false);
+          setEditingEquipment(null);
+        }}
+        onSave={handleSaveEquipment}
+        initialData={editingEquipment}
+        inputClass={inputClass}
+        btnPrimary={btnPrimary}
+        btnSecondary={btnSecondary}
+      />
+
+      <PlanAssignmentModal
+        isOpen={Boolean(editingPlan)}
+        onClose={() => setEditingPlan(null)}
+        onSave={handleSavePlanAssignment}
+        plan={editingPlan}
         inputClass={inputClass}
         btnPrimary={btnPrimary}
         btnSecondary={btnSecondary}

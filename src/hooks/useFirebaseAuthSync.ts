@@ -102,6 +102,31 @@ export function useFirebaseAuthSync({
     return () => unsubscribe();
   }, [currentUser, lastSyncedAt, onDataRestored, showAlert]);
 
+  // Realtime Cloud Auto-upload on local mutations (debounced 2.5s)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const handleStorageChanged = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        try {
+          await FirebaseService.uploadToCloud(currentUser);
+          const nowIso = new Date().toISOString();
+          setLastSyncedAt(nowIso);
+        } catch (err) {
+          console.warn('[Auto Cloud Sync Warning]', err);
+        }
+      }, 2500);
+    };
+
+    window.addEventListener('thp_storage_changed', handleStorageChanged);
+    return () => {
+      clearTimeout(debounceTimer);
+      window.removeEventListener('thp_storage_changed', handleStorageChanged);
+    };
+  }, [currentUser]);
+
   const loginWithGoogle = useCallback(async () => {
     try {
       setIsSyncing(true);

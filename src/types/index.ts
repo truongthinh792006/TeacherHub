@@ -139,10 +139,20 @@ export interface TeacherAssignmentRecord extends BaseRecord {
   notes?: string;
 }
 
+export interface DepartmentEquipmentRecord extends BaseRecord {
+  recordType: 'EQUIPMENT';
+  name: string;
+  quantity: string;
+  condition: string;
+  assignedGrades: string;
+  notes?: string;
+}
+
 export type DepartmentRecord =
   | LessonEvaluationRecord
   | DepartmentMeetingRecord
-  | TeacherAssignmentRecord;
+  | TeacherAssignmentRecord
+  | DepartmentEquipmentRecord;
 
 // Firebase Auth & Cloud Firestore Sync Types
 export interface FirebaseUserProfile {

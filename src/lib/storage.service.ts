@@ -44,6 +44,9 @@ export const StorageService = {
         StorageService.getKey(collection),
         JSON.stringify([item, ...existing]),
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('thp_storage_changed', { detail: { collection } }));
+      }
       return item;
     } catch (error) {
       console.error(`[StorageService] Error creating item in "${collection}":`, error);
@@ -61,6 +64,9 @@ export const StorageService = {
         StorageService.getKey(collection),
         JSON.stringify(updated),
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('thp_storage_changed', { detail: { collection } }));
+      }
       return true;
     } catch (error) {
       console.error(`[StorageService] Error updating item in "${collection}":`, error);
@@ -76,6 +82,9 @@ export const StorageService = {
         StorageService.getKey(collection),
         JSON.stringify(filtered),
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('thp_storage_changed', { detail: { collection } }));
+      }
       return true;
     } catch (error) {
       console.error(`[StorageService] Error deleting item in "${collection}":`, error);
@@ -89,6 +98,9 @@ export const StorageService = {
         StorageService.getKey(collection),
         JSON.stringify(data),
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('thp_storage_changed', { detail: { collection } }));
+      }
       return true;
     } catch (error) {
       console.error(`[StorageService] Error hardSet in "${collection}":`, error);

@@ -1,9 +1,14 @@
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { PPCTPlan, TeacherAssignmentRecord } from '../../types';
+import {
+  DepartmentEquipmentRecord,
+  PPCTPlan,
+  TeacherAssignmentRecord,
+} from '../../types';
 
 export function exportDepartmentAppendix1Excel(
   plans: PPCTPlan[],
+  equipments: DepartmentEquipmentRecord[] = [],
   schoolName: string = 'SỞ GIÁO DỤC VÀ ĐÀO TẠO - TRƯỜNG THPT',
   deptName: string = 'TỔ CHUYÊN MÔN TIN HỌC',
   year: string = '2024 - 2025',
@@ -20,18 +25,26 @@ export function exportDepartmentAppendix1Excel(
     ['', '', 'KẾ HOẠCH DẠY HỌC MÔN TIN HỌC CỦA TỔ CHUYÊN MÔN'],
     ['', '', `Năm học: ${year} (Theo Phụ lục 1, Công văn số 5512/BGDĐT-GDTrH)`],
     [],
-    ['STT', 'Khối lớp', 'Định hướng chương trình', 'Số tiết / tuần', 'Tổng số tiết / năm', 'Số tuần thực dạy', 'Ghi chú'],
+    ['STT', 'Khối lớp', 'Tên kế hoạch / Định hướng', 'Số tiết / tuần', 'Tổng số tiết / năm', 'Số tuần thực dạy', 'Lớp phụ trách / Ghi chú'],
   ];
 
-  const gradeConfigs = [
-    { grade: 'Khối 10', track: 'Chương trình cơ bản GDPT 2018', pWeek: 2, pTotal: 70, weeks: 35, note: 'Toàn bộ học sinh khối 10' },
-    { grade: 'Khối 11', track: 'Định hướng Tin học ứng dụng (ICT) & Khoa học máy tính (CS)', pWeek: 2, pTotal: 70, weeks: 35, note: 'Chia lớp theo định hướng nghề nghiệp' },
-    { grade: 'Khối 12', track: 'Định hướng Tin học ứng dụng (Bộ Kết nối tri thức - 28 bài)', pWeek: 2, pTotal: 70, weeks: 35, note: 'Ôn tập thi Tốt nghiệp THPT 2025' },
-  ];
-
-  gradeConfigs.forEach((gc, idx) => {
-    s1Rows.push([idx + 1, gc.grade, gc.track, gc.pWeek, gc.pTotal, gc.weeks, gc.note]);
-  });
+  if (plans.length > 0) {
+    plans.forEach((plan, idx) => {
+      s1Rows.push([
+        idx + 1,
+        `Khối ${plan.grade}`,
+        `${plan.title} (${plan.track})`,
+        2,
+        plan.totalPeriods || 70,
+        plan.totalWeeks || 35,
+        plan.assignedClasses || 'Toàn khối',
+      ]);
+    });
+  } else {
+    s1Rows.push([1, 'Khối 10', 'Tin học 10 - Chương trình chuẩn GDPT 2018', 2, 70, 35, 'Toàn khối 10']);
+    s1Rows.push([2, 'Khối 11', 'Tin học 11 - Định hướng Tin học ứng dụng & KHMT', 2, 70, 35, '11A1, 11A2, 11Tin']);
+    s1Rows.push([3, 'Khối 12', 'Tin học 12 - Định hướng Tin học ứng dụng (KNTT)', 2, 70, 35, 'Toàn khối 12']);
+  }
 
   const ws1 = XLSX.utils.aoa_to_sheet(s1Rows);
   ws1['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 45 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 32 }];
@@ -51,11 +64,25 @@ export function exportDepartmentAppendix1Excel(
     [deptName.toUpperCase(), '', '', '', `Năm học: ${year}`],
     [],
     ['STT', 'Tên thiết bị / Phòng thực hành', 'Số lượng', 'Tình trạng kỹ thuật', 'Lớp / Khối sử dụng', 'Ghi chú sử dụng'],
-    [1, 'Phòng máy tính số 1 (Phòng A)', '46 máy trạm + 1 máy chủ', 'Hoạt động tốt, mạng LAN/Internet 150Mbps', 'Khối 10, Khối 12', 'Thực hành lập trình, thiết kế web'],
-    [2, 'Phòng máy tính số 2 (Phòng B)', '41 máy trạm + 1 máy chủ', 'Hoạt động ổn định, cài đặt VS Code & Python', 'Khối 11, Khối 12', 'Thực hành mạng máy tính, đồ họa'],
-    [3, 'Bộ thiết bị mạng thực hành', '04 bộ Switch & Router Wi-Fi', 'Đảm bảo chuẩn kỹ thuật thực hành', 'Khối 12 (Bài 3, 4, 5, 22)', 'Thực hành kết nối và bấm cáp mạng'],
-    [4, 'Máy chiếu / Tivi tương tác thông minh', '02 chiếc', 'Độ phân giải Full HD, kết nối không dây', 'Tất cả các khối', 'Phục vụ bài giảng điện tử số hóa'],
   ];
+
+  if (equipments.length > 0) {
+    equipments.forEach((eq, idx) => {
+      s2Rows.push([
+        idx + 1,
+        eq.name,
+        eq.quantity,
+        eq.condition,
+        eq.assignedGrades,
+        eq.notes || '',
+      ]);
+    });
+  } else {
+    s2Rows.push([1, 'Phòng máy tính số 1 (Phòng A)', '46 máy trạm + 1 máy chủ', 'Hoạt động tốt, mạng LAN/Internet 150Mbps', 'Khối 10, Khối 12', 'Thực hành lập trình, thiết kế web']);
+    s2Rows.push([2, 'Phòng máy tính số 2 (Phòng B)', '41 máy trạm + 1 máy chủ', 'Hoạt động ổn định, cài đặt VS Code & Python', 'Khối 11, Khối 12', 'Thực hành mạng máy tính, đồ họa']);
+    s2Rows.push([3, 'Bộ thiết bị mạng thực hành', '04 bộ Switch & Router Wi-Fi', 'Đảm bảo chuẩn kỹ thuật thực hành', 'Khối 12 (Bài 3, 4, 5, 22)', 'Thực hành kết nối và bấm cáp mạng']);
+    s2Rows.push([4, 'Máy chiếu / Tivi tương tác thông minh', '02 chiếc', 'Độ phân giải Full HD, kết nối không dây', 'Tất cả các khối', 'Phục vụ bài giảng điện tử số hóa']);
+  }
 
   const ws2 = XLSX.utils.aoa_to_sheet(s2Rows);
   ws2['!cols'] = [{ wch: 6 }, { wch: 35 }, { wch: 25 }, { wch: 35 }, { wch: 20 }, { wch: 30 }];

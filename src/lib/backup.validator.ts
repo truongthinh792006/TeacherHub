@@ -2,6 +2,7 @@ import {
   BackupData,
   BackupPayload,
   BackupValidationResult,
+  DepartmentEquipmentRecord,
   DepartmentMeetingRecord,
   DepartmentRecord,
   DocumentLink,
@@ -434,6 +435,19 @@ export function validateBackupData(raw: unknown): BackupValidationResult {
             updatedAt: sanitizeTimestamp(d.updatedAt, now),
           };
           department.push(assignment);
+        } else if (recordType === 'EQUIPMENT') {
+          const equipment: DepartmentEquipmentRecord = {
+            id: sanitizeId(d.id),
+            recordType: 'EQUIPMENT',
+            name: isValidString(d.name) ? d.name : 'Thiết bị / Phòng máy tính',
+            quantity: isValidString(d.quantity) ? d.quantity : '1',
+            condition: isValidString(d.condition) ? d.condition : 'Hoạt động tốt',
+            assignedGrades: isValidString(d.assignedGrades) ? d.assignedGrades : 'Khối 10, 11, 12',
+            notes: isValidString(d.notes) ? d.notes : undefined,
+            createdAt: sanitizeTimestamp(d.createdAt, now),
+            updatedAt: sanitizeTimestamp(d.updatedAt, now),
+          };
+          department.push(equipment);
         }
       });
     }
